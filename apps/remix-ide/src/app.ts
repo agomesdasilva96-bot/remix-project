@@ -71,7 +71,7 @@ import { HardhatHandleDesktop } from './app/plugins/electron/hardhatPlugin'
 import { circomPlugin } from './app/plugins/electron/circomElectronPlugin'
 import { GitHubAuthHandler } from './app/plugins/electron/gitHubAuthHandler'
 import { GitPlugin } from './app/plugins/git'
-import { Matomo } from './app/plugins/matomo'
+import type { Matomo } from './app/plugins/matomo'
 import { DesktopClient } from './app/plugins/desktop-client'
 import { DesktopHost } from './app/plugins/electron/desktopHostPlugin'
 import { WalletConnect } from './app/plugins/walletconnect'
@@ -111,6 +111,8 @@ import Terminal from './app/panels/terminal'
 import TabProxy from './app/panels/tab-proxy.js'
 import { Plugin } from '@remixproject/engine'
 import BottomBarPanel from './app/components/bottom-bar-panel'
+
+const _paq = (window._paq = window._paq || [])
 
 export class platformApi {
   get name() {
@@ -217,7 +219,7 @@ class AppComponent {
     this.workspace = pluginLoader.get()
     if (pluginLoader.current === 'queryParams') {
       this.workspace.map((workspace) => {
-        this.matomo.push(['trackEvent', 'App', 'queryParams-activated', workspace])
+        _paq.push(['trackEvent', 'App', 'queryParams-activated', workspace])
       })
     }
     this.engine = new RemixEngine()
@@ -246,7 +248,7 @@ class AppComponent {
     this.showMatomo = contextShouldShowMatomo && (!this.matomoConfAlreadySet || shouldRenewConsent)
 
     if (this.showMatomo && shouldRenewConsent) {
-      this.matomo.push(['trackEvent', 'Matomo', 'refreshMatomoPermissions']);
+      _paq.push(['trackEvent', 'Matomo', 'refreshMatomoPermissions']);
     }
 
     this.walkthroughService = new WalkthroughService(appManager)
@@ -682,7 +684,7 @@ class AppComponent {
               if (callDetails.length > 1) {
                 this.appManager.call('notification', 'toast', `initiating ${callDetails[0]} and calling "${callDetails[1]}" ...`)
                 // @todo(remove the timeout when activatePlugin is on 0.3.0)
-                this.matomo.push(['trackEvent', 'App', 'queryParams-calls', this.params.call])
+                _paq.push(['trackEvent', 'App', 'queryParams-calls', this.params.call])
                 //@ts-ignore
                 await this.appManager.call(...callDetails).catch(console.error)
               }
@@ -693,7 +695,7 @@ class AppComponent {
 
               // call all functions in the list, one after the other
               for (const call of calls) {
-                this.matomo.push(['trackEvent', 'App', 'queryParams-calls', call])
+                _paq.push(['trackEvent', 'App', 'queryParams-calls', call])
                 const callDetails = call.split('//')
                 if (callDetails.length > 1) {
                   this.appManager.call('notification', 'toast', `initiating ${callDetails[0]} and calling "${callDetails[1]}" ...`)

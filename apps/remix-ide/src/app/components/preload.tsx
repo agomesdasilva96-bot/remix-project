@@ -45,7 +45,7 @@ export const Preload = (props: any) => {
         })
       })
       .catch((err) => {
-        matomo.push(['trackEvent', 'App', 'PreloadError', err && err.message])
+        window._paq.push(['trackEvent', 'App', 'PreloadError', err && err.message])
         console.error('Error loading Remix:', err)
         setError(true)
       })
@@ -62,7 +62,7 @@ export const Preload = (props: any) => {
     setShowDownloader(false)
     const fsUtility = new fileSystemUtility()
     const migrationResult = await fsUtility.migrate(localStorageFileSystem.current, remixIndexedDB.current)
-    _paq.push(['trackEvent', 'Migrate', 'result', migrationResult ? 'success' : 'fail'])
+    window._paq.push(['trackEvent', 'Migrate', 'result', migrationResult ? 'success' : 'fail'])
     await setFileSystems()
   }
 
@@ -73,10 +73,10 @@ export const Preload = (props: any) => {
     ])
     if (fsLoaded) {
       console.log(fsLoaded.name + ' activated')
-      matomo.push(['trackEvent', 'Storage', 'activate', fsLoaded.name])
+      window._paq.push(['trackEvent', 'Storage', 'activate', fsLoaded.name])
       loadAppComponent()
     } else {
-      matomo.push(['trackEvent', 'Storage', 'error', 'no supported storage'])
+      window._paq.push(['trackEvent', 'Storage', 'error', 'no supported storage'])
       setSupported(false)
     }
   }
@@ -94,8 +94,8 @@ export const Preload = (props: any) => {
       return
     }
     async function loadStorage() {
-      ;(await remixFileSystems.current.addFileSystem(remixIndexedDB.current)) || matomo.push(['trackEvent', 'Storage', 'error', 'indexedDB not supported'])
-      ;(await remixFileSystems.current.addFileSystem(localStorageFileSystem.current)) || matomo.push(['trackEvent', 'Storage', 'error', 'localstorage not supported'])
+      ;(await remixFileSystems.current.addFileSystem(remixIndexedDB.current)) || window._paq.push(['trackEvent', 'Storage', 'error', 'indexedDB not supported'])
+      ;(await remixFileSystems.current.addFileSystem(localStorageFileSystem.current)) || window._paq.push(['trackEvent', 'Storage', 'error', 'localstorage not supported'])
       await testmigration()
       remixIndexedDB.current.loaded && (await remixIndexedDB.current.checkWorkspaces())
       localStorageFileSystem.current.loaded && (await localStorageFileSystem.current.checkWorkspaces())

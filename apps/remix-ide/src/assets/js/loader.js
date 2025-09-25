@@ -8,7 +8,7 @@ const domainsOnPrem = {
   'alpha.remix.live': 1,
   'beta.remix.live': 2,
   'remix.ethereum.org': 3,
-  'localhost': 4 // remix desktop
+  'localhost': isElectron() ? 4 : 1, // remix desktop
 }
 
 let cloudDomainToTrack = domains[window.location.hostname]

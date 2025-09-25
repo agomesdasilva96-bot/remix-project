@@ -20,7 +20,6 @@ export class Matomo extends Plugin {
   }
 
   async track(data: string[]) {
-    if (!allowedPlugins.includes(this.currentRequest.from)) return
     this._paq.push(data)
   }
 
