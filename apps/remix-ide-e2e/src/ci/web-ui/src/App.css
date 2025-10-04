@@ -1,96 +1,164 @@
+/* VS Code-style Panel Layout */
+:root {
+  --header-height: 3.5rem;
+  --controls-height: 4rem;
+  --panel-header-height: 2.5rem;
+  --log-height: 30vh;
+  --panel-border: 1px solid var(--border-color);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .app {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   overflow: hidden;
 }
 
-.container {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
+/* Header */
 .header {
+  height: var(--header-height);
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
-}
-
-.header h4 {
-  margin: 0;
-  font-size: 1.75rem;
-  font-weight: 600;
-}
-
-.tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--border-color);
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  background: var(--bg-secondary);
+  border-bottom: var(--panel-border);
   flex-shrink: 0;
 }
 
-.tab {
-  background: transparent;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9375rem;
+.header h4 {
+  font-size: 1rem;
   font-weight: 500;
-  color: var(--text-secondary);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.2s;
-}
-
-.tab:hover {
+  margin: 0;
   color: var(--text-primary);
-  background: var(--bg-hover);
 }
 
-.tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
-.content {
-  display: block;
+.badge.success {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.badge.warning {
+  background: rgba(255, 152, 0, 0.2);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+/* Panels Container */
+.panels-container {
   flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
   min-height: 0;
   overflow: hidden;
 }
 
-.content.split-layout {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 2rem;
-  align-items: start;
+.panels-container:not(:has(.panel-ci)) {
+  grid-template-columns: 1fr;
 }
 
-.left-column {
-  min-width: 0;
-  height: 100%;
+.panel {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 0;
+  border-right: var(--panel-border);
+  background: var(--bg-primary);
 }
 
-.right-column {
-  min-width: 0;
-  position: sticky;
-  top: 1rem;
+.panel:last-child {
+  border-right: none;
 }
 
-@media (max-width: 1024px) {
-  .content.split-layout {
+.panel-header {
+  height: var(--panel-header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  background: var(--bg-secondary);
+  border-bottom: var(--panel-border);
+  flex-shrink: 0;
+}
+
+.panel-header h5 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+/* Bottom log panel */
+.panel-log {
+  height: var(--log-height);
+  border-top: var(--panel-border);
+  border-right: none;
+  flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .panels-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr;
+  }
+
+  .panel {
+    border-right: none;
+    border-bottom: var(--panel-border);
+  }
+
+  .panel:last-child {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --log-height: 25vh;
+  }
+
+  .header {
+    flex-direction: column;
+    height: auto;
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .panels-container {
     grid-template-columns: 1fr;
   }
-
-  .right-column {
-    position: static;
-  }
 }
-

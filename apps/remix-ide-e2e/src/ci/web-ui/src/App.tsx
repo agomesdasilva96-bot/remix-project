@@ -7,7 +7,7 @@ import { CIPipelineDetails } from './components/CIPipelineDetails'
 import { useSettings } from './hooks/useSettings'
 import { useFavorites } from './hooks/useFavorites'
 import { useCIStatus } from './hooks/useCIStatus'
-import type { Test, StatusResponse, Browser, Layout, Tab } from './types'
+import type { Test, StatusResponse, Browser } from './types'
 import './App.css'
 
 function App() {
@@ -18,14 +18,10 @@ function App() {
   const [status, setStatus] = useState<StatusResponse | null>(null)
   const [log, setLog] = useState<string>('Welcome to Remix E2E Test Runner!\n\nSelect a test and click "Run" to get started.\nYou can filter tests, mark favorites, and monitor CI pipelines.\n')
   const [currentPipelineId, setCurrentPipelineId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('tests')
 
   const filter = settings.filter || ''
   const browser = (settings.browser || 'chrome') as Browser
-  const layout = (settings.layout || 'inline') as Layout
-  const pinDetails = settings.pinDetails || false
-  const darkMode = settings.darkMode || false
-  const logCollapsed = settings.logCollapsed || false
+  const darkMode = settings.darkMode ?? true
 
   const appendLog = useCallback((message: string) => {
     setLog(prev => prev + '\n' + message)
@@ -52,8 +48,6 @@ function App() {
             appendLog(`✓ Found running pipeline: ${runningPipelineId}`)
             setCurrentPipelineId(runningPipelineId)
             startPolling()
-            // Switch to CI tab to show the running pipeline
-            setActiveTab('ci')
           } else {
             appendLog('No running pipelines found.')
           }
@@ -110,144 +104,86 @@ function App() {
     }
   }
 
-  const adjustLog = (delta: number) => {
-    const root = document.documentElement
-    const current = parseInt(getComputedStyle(root).getPropertyValue('--log-height'))
-    const next = Math.max(15, Math.min(80, current + delta))
-    root.style.setProperty('--log-height', `${next}vh`)
-  }
-
-  const toggleLog = () => {
-    const collapsed = !logCollapsed
-    updateSettings({ logCollapsed: collapsed })
-    document.body.classList.toggle('log-collapsed', collapsed)
-  }
-
   const statusText = status
     ? `branch: ${status.branch} · circle token: ${status.hasToken ? '✅' : '⚠️ missing'}`
     : 'Loading…'
 
   return (
     <div className="app">
-      <div className="container">
-        <div className="header">
-          <h4>Select & Run a Test</h4>
-          <span className={`badge ${status?.hasToken ? 'success' : 'warning'}`}>
-            {statusText}
-          </span>
-        </div>
+      <div className="header">
+        <h4>Remix E2E Test Runner</h4>
+        <span className={`badge ${status?.hasToken ? 'success' : 'warning'}`}>
+          {statusText}
+        </span>
+      </div>
 
-        <div className="tabs">
-          <button
-            className={`tab ${activeTab === 'tests' ? 'active' : ''}`}
-            onClick={() => setActiveTab('tests')}
-          >
-            Tests
-          </button>
-          <button
-            className={`tab ${activeTab === 'ci' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ci')}
-          >
-            CI
-          </button>
-          <button
-            className={`tab ${activeTab === 'log' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('log')
-              if (logCollapsed) {
-                toggleLog()
-              }
-              // Scroll to log panel after a short delay
-              setTimeout(() => {
-                const logPanel = document.querySelector('.log-panel')
-                if (logPanel) {
-                  logPanel.scrollTop = logPanel.scrollHeight
-                }
-              }, 100)
-            }}
-          >
-            Log
-          </button>
-        </div>
+      <ControlPanel
+        filter={filter}
+        onFilterChange={(value) => updateSettings({ filter: value })}
+        browser={browser}
+        onBrowserChange={(b) => updateSettings({ browser: b })}
+        darkMode={darkMode}
+        onDarkModeChange={(d) => updateSettings({ darkMode: d })}
+        onSetToken={handleSetToken}
+      />
 
-        <ControlPanel
-          filter={filter}
-          onFilterChange={(value) => updateSettings({ filter: value })}
-          browser={browser}
-          onBrowserChange={(b) => updateSettings({ browser: b })}
-          layout={layout}
-          onLayoutChange={(l) => updateSettings({ layout: l })}
-          pinDetails={pinDetails}
-          onPinDetailsChange={(p) => updateSettings({ pinDetails: p })}
-          darkMode={darkMode}
-          onDarkModeChange={(d) => updateSettings({ darkMode: d })}
-          logCollapsed={logCollapsed}
-          onToggleLog={toggleLog}
-          onClearLog={() => setLog('')}
-          onLogAdjust={adjustLog}
-          onSetToken={handleSetToken}
-        />
-
-        {activeTab === 'tests' && (
-          <div className={`content ${layout === 'split' ? 'split-layout' : ''}`}>
-            <div className="left-column">
-              {favoriteTests.length > 0 && (
-                <TestTable
-                  tests={favoriteTests}
-                  favorites={favorites}
-                  onToggleFavorite={toggleFavorite}
-                  onRunTest={handleRunTest}
-                  title="Favorites"
-                  showClearFavorites
-                  onClearFavorites={clearFavorites}
-                />
-              )}
-
+      <div className="panels-container">
+        {/* Left Panel - Tests */}
+        <div className="panel panel-tests">
+          <div className="panel-header">
+            <h5>Tests ({filteredTests.length})</h5>
+          </div>
+          <div className="panel-content">
+            {favoriteTests.length > 0 && (
               <TestTable
-                tests={regularTests}
+                tests={favoriteTests}
                 favorites={favorites}
                 onToggleFavorite={toggleFavorite}
                 onRunTest={handleRunTest}
+                title="Favorites"
+                showClearFavorites
+                onClearFavorites={clearFavorites}
+              />
+            )}
+
+            <TestTable
+              tests={regularTests}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              onRunTest={handleRunTest}
+            />
+          </div>
+        </div>
+
+        {/* Right Panel - CI Details */}
+        {ciStatus && (
+          <div className="panel panel-ci">
+            <div className="panel-header">
+              <h5>CI Pipeline</h5>
+            </div>
+            <div className="panel-content">
+              <CIPipelineDetails
+                ciStatus={ciStatus}
+                onLog={appendLog}
+                pinned={false}
               />
             </div>
-
-            {layout === 'split' && ciStatus && (
-              <div className="right-column">
-                <CIPipelineDetails
-                  ciStatus={ciStatus}
-                  onLog={appendLog}
-                  pinned={pinDetails}
-                />
-              </div>
-            )}
           </div>
-        )}
-
-        {activeTab === 'tests' && layout === 'inline' && ciStatus && (
-          <CIPipelineDetails
-            ciStatus={ciStatus}
-            onLog={appendLog}
-            pinned={pinDetails}
-          />
-        )}
-
-        {activeTab === 'ci' && (
-          <CIPipelineDetails
-            ciStatus={ciStatus}
-            onLog={appendLog}
-            pinned={false}
-          />
         )}
       </div>
 
-      <LogPanel
-        content={log}
-        collapsed={logCollapsed && activeTab !== 'log'}
-        onToggle={toggleLog}
-      />
+      {/* Bottom Panel - Logs */}
+      <div className="panel panel-log">
+        <LogPanel
+          content={log}
+          collapsed={false}
+          onToggle={() => {}}
+        />
+      </div>
     </div>
   )
 }
 
 export default App
+
 

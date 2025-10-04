@@ -7,7 +7,7 @@ interface LogPanelProps {
   onToggle: () => void
 }
 
-export function LogPanel({ content, collapsed, onToggle }: LogPanelProps) {
+export function LogPanel({ content, collapsed }: LogPanelProps) {
   const logRef = useRef<HTMLPreElement>(null)
   const [isDragging, setIsDragging] = useState(false)
 
@@ -45,22 +45,17 @@ export function LogPanel({ content, collapsed, onToggle }: LogPanelProps) {
 
   return (
     <>
-      {!collapsed && (
-        <div
-          className={`log-resizer ${isDragging ? 'dragging' : ''}`}
-          onMouseDown={handleMouseDown}
-          title="Drag to resize log panel"
-        />
-      )}
-      <pre ref={logRef} className={`log-panel ${collapsed ? 'collapsed' : ''}`}>
-        <div className="log-header">Log</div>
+      <div
+        className={`log-resizer ${isDragging ? 'dragging' : ''}`}
+        onMouseDown={handleMouseDown}
+        title="Drag to resize log panel"
+      />
+      <div className="panel-header">
+        <h5>Output</h5>
+      </div>
+      <pre ref={logRef} className="panel-content log-content">
         {content}
       </pre>
-      {collapsed && (
-        <button className="log-fab" onClick={onToggle} title="Show log">
-          Log
-        </button>
-      )}
     </>
   )
 }
