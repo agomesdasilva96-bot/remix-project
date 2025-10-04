@@ -3,17 +3,17 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Select Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <style>
       /* Leave space at bottom for sticky log panel */
       :root { --log-height: 28vh; }
-      body { font-family: ui-sans-serif, system-ui, sans-serif; margin: 1.5rem; padding-bottom: calc(var(--log-height) + 1rem); }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif; padding-bottom: calc(var(--log-height) + 1rem); background: #fafafa; }
+  .container-page { max-width: 1200px; margin: 1.25rem auto; }
       header { display: flex; gap: 1rem; align-items: center; }
       .row { display: flex; gap: 0.5rem; align-items: center; }
-      input[type=text]{ padding: .4rem .6rem; width: 320px; }
-      button { padding: .4rem .7rem; cursor: pointer; }
-      table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-      th, td { border-bottom: 1px solid #ddd; padding: .4rem .6rem; text-align: left; }
-      tr:hover { background: #fafafa; }
+  input[type=text]{ padding: .4rem .6rem; width: 320px; }
+  button { cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; margin-top: .5rem; }
   .badge { font-size: .8rem; padding: .1rem .35rem; border: 1px solid #ccc; border-radius: .35rem; }
       .ok { color: #0a0; }
       .warn { color: #b80; }
@@ -46,7 +46,7 @@
         white-space: pre-wrap;
         z-index: 1000;
       }
-      #log::before { content: 'Log'; display: block; color: #9aa0a6; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .25rem; }
+  #log::before { content: 'Log'; display: block; color: #9aa0a6; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: .25rem; }
 
       /* Collapsed log state */
       body.log-collapsed { padding-bottom: 1rem; }
@@ -57,58 +57,84 @@
     </style>
   </head>
   <body>
-    <header>
-      <h2>Select & Run a Test</h2>
-      <span id="status" class="badge">Loading…</span>
-    </header>
-    <div class="row">
-      <label>Filter:</label>
-      <input id="filter" type="text" placeholder="type to filter by name"/>
-      <label>Mode:</label>
-      <select id="mode">
-        <option value="local">Local</option>
-        <option value="remote">CircleCI</option>
-      </select>
-      <label>Browser:</label>
-      <select id="browser">
-        <option value="chrome">chrome</option>
-        <option value="firefox">firefox</option>
-      </select>
-      <label>Layout:</label>
-      <select id="layout">
-        <option value="inline">Inline</option>
-        <option value="split">Split</option>
-      </select>
-      <label style="gap:.25rem;display:flex;align-items:center"><input type="checkbox" id="pinDetails"/> Pin details</label>
-      <button id="clearLog">Clear log</button>
-      <button id="logMinus">Log -</button>
-      <button id="logPlus">Log +</button>
-      <button id="setToken">Set token</button>
-      <button id="toggleLog">Hide log</button>
-    </div>
+    <div class="container-page">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <h4 class="m-0">Select & Run a Test</h4>
+        <span id="status" class="badge text-bg-secondary">Loading…</span>
+      </div>
+      <ul class="nav nav-tabs mb-2" id="topTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <a class="nav-link active" href="#" data-tab="tests" role="tab" aria-selected="true">Tests</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" href="#" data-tab="ci" role="tab" aria-selected="false">CI</a>
+        </li>
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" href="#" data-tab="log" role="tab" aria-selected="false">Log</a>
+        </li>
+      </ul>
+      <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <div class="input-group" style="width: 340px;">
+          <span class="input-group-text">Filter</span>
+          <input id="filter" type="text" class="form-control" placeholder="type to filter by name"/>
+        </div>
+        <div class="input-group" style="width: 200px;">
+          <span class="input-group-text">Mode</span>
+          <select id="mode" class="form-select">
+            <option value="local">Local</option>
+            <option value="remote">CircleCI</option>
+          </select>
+        </div>
+        <div class="input-group" style="width: 200px;">
+          <span class="input-group-text">Browser</span>
+          <select id="browser" class="form-select">
+            <option value="chrome">chrome</option>
+            <option value="firefox">firefox</option>
+          </select>
+        </div>
+        <div class="input-group" style="width: 210px;">
+          <span class="input-group-text">Layout</span>
+          <select id="layout" class="form-select">
+            <option value="inline">Inline</option>
+            <option value="split">Split</option>
+          </select>
+        </div>
+        <div class="form-check form-switch ms-2">
+          <input class="form-check-input" type="checkbox" id="pinDetails">
+          <label class="form-check-label" for="pinDetails">Pin details</label>
+        </div>
+        <div class="vr"></div>
+        <button id="clearLog" class="btn btn-outline-secondary btn-sm">Clear log</button>
+        <button id="logMinus" class="btn btn-outline-secondary btn-sm">Log -</button>
+        <button id="logPlus" class="btn btn-outline-secondary btn-sm">Log +</button>
+        <button id="toggleLog" class="btn btn-outline-secondary btn-sm">Hide log</button>
+        <div class="vr"></div>
+        <button id="setToken" class="btn btn-primary btn-sm">Set token</button>
+      </div>
     <div id="content" class="content">
       <div id="leftCol">
-        <table>
+        <table class="table table-hover align-middle">
           <thead>
             <tr>
-              <th>Test</th>
-              <th>Source</th>
-              <th>Dist</th>
-              <th></th>
+              <th>Name</th>
+              <th style="width:90px;">Built</th>
+              <th style="width:110px;"></th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
         </table>
         <div id="ciInlineAnchor"></div>
-        <div id="actions" class="row" style="margin-top:.5rem"></div>
+        <div id="actions" class="d-flex gap-2" style="margin-top:.5rem"></div>
       </div>
       <div id="colResizer" title="Drag to resize"></div>
       <div id="rightCol">
         <div id="ciPanel"><!-- ciDetails will be moved here in split view --></div>
       </div>
     </div>
-  <div id="ciDetails" style="margin-top: 1rem"></div>
+  <div id="ciDetails" class="container-page" style="margin-top: 1rem"></div>
+  <pre id="log"></pre>
   <button id="logFab" title="Show log">Log</button>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 
     <script>
       const $ = (s) => document.querySelector(s)
@@ -122,6 +148,7 @@
   const actions = $('#actions')
   const layoutSel = document.getElementById('layout')
   const pinChk = document.getElementById('pinDetails')
+  const topTabs = document.getElementById('topTabs')
   const ciDetailsEl = document.getElementById('ciDetails')
   const ciInlineAnchor = document.getElementById('ciInlineAnchor')
   const ciPanel = document.getElementById('ciPanel')
@@ -145,9 +172,8 @@
         const rows = tests.filter(x => x.base.toLowerCase().includes(q)).map((t) => `
           <tr>
             <td><code>${t.base}</code></td>
-            <td>${t.src.replace('apps/remix-ide-e2e/src/tests/','')}</td>
-            <td>${t.hasDist ? '<span class="ok">built</span>' : '<span class="warn">missing</span>'}</td>
-            <td><button data-test="${t.base}">Run</button></td>
+            <td>${t.hasDist ? '<span class="badge text-bg-success">built</span>' : '<span class="badge text-bg-warning">missing</span>'}</td>
+            <td><button class="btn btn-sm btn-outline-primary" data-test="${t.base}">Run</button></td>
           </tr>
         `)
         tbody.innerHTML = rows.join('')
@@ -174,6 +200,7 @@
         applyLayout()
         restoreSplitWidth()
   updateLogFab()
+    setActiveTab('tests')
       }
 
       function persistSettings() {
@@ -255,10 +282,26 @@
           const rows = jobs.map(j => {
             const dur = j.durationSec != null ? `${j.durationSec}s` : ''
             const link = j.ui ? `<a href="${j.ui}" target="_blank">open</a>` : ''
-            return `<tr><td>${j.name || j.job_number || ''}</td><td>${(j.status || 'unknown')}</td><td>${dur}</td><td>${link}</td></tr>`
+            const statusBadge = (s => {
+              s = (s||'').toLowerCase();
+              if (s==='success') return '<span class="badge text-bg-success">success</span>'
+              if (s==='failed' || s==='error') return '<span class="badge text-bg-danger">failed</span>'
+              if (s==='running' || s==='on_hold') return '<span class="badge text-bg-info">'+s+'</span>'
+              if (s==='canceled') return '<span class="badge text-bg-secondary">canceled</span>'
+              return '<span class="badge text-bg-light text-dark">'+(s||'unknown')+'</span>'
+            })(j.status)
+            return `<tr><td>${j.name || j.job_number || ''}</td><td>${statusBadge}</td><td>${dur}</td><td>${link}</td></tr>`
           }).join('')
-          const table = rows ? `<table style="width:100%;border-collapse:collapse;margin:.25rem 0"><thead><tr><th style="text-align:left">Job</th><th>Status</th><th>Duration</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div style="color:#777">No jobs</div>'
-          return `<div style="border:1px solid #eee;padding:.5rem;margin-bottom:.5rem"><div><strong>${wf.name}</strong> — ${wf.status}</div>${table}</div>`
+          const table = rows ? `<table class="table table-sm mb-0"><thead><tr><th class="text-start">Job</th><th>Status</th><th>Duration</th><th></th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="text-muted">No jobs</div>'
+          const wfBadge = (s => {
+            s = (s||'').toLowerCase();
+            if (s==='success') return '<span class="badge text-bg-success">success</span>'
+            if (s==='failed' || s==='error') return '<span class="badge text-bg-danger">failed</span>'
+            if (s==='running' || s==='on_hold') return '<span class="badge text-bg-info">'+s+'</span>'
+            if (s==='canceled') return '<span class="badge text-bg-secondary">canceled</span>'
+            return '<span class="badge text-bg-light text-dark">'+(s||'unknown')+'</span>'
+          })(wf.status)
+          return `<div class="card mb-2"><div class="card-header d-flex justify-content-between align-items-center"><div><strong>${wf.name}</strong></div><div>${wfBadge}</div></div><div class="card-body">${table}</div></div>`
         }).join('')
         el.innerHTML = `<h4>CI details</h4>${wfHtml}`
         if (!scrolledCiOnce && layoutSel.value === 'inline') {
@@ -359,6 +402,42 @@
         const collapsed = document.body.classList.contains('log-collapsed')
         logFab.style.display = collapsed ? 'inline-block' : 'none'
       }
+
+      // Tabs handling: Tests, CI, Log
+      function setActiveTab(name) {
+        // nav classes
+        Array.from(topTabs.querySelectorAll('a.nav-link')).forEach(a => {
+          const isActive = a.dataset.tab === name
+          a.classList.toggle('active', isActive)
+          a.setAttribute('aria-selected', String(isActive))
+        })
+        // Show/hide sections
+        const content = document.getElementById('content')
+        const ci = document.getElementById('ciDetails')
+        if (name === 'tests') {
+          content.style.display = ''
+          ci.style.display = ''
+        } else if (name === 'ci') {
+          // Ensure inline layout so details are visible
+          if (layoutSel.value !== 'inline') { layoutSel.value = 'inline'; applyLayout(); persistSettings() }
+          content.style.display = 'none'
+          ci.style.display = ''
+          ci.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } else if (name === 'log') {
+          content.style.display = 'none'
+          ci.style.display = 'none'
+          // Show log panel and scroll bottom
+          if (document.body.classList.contains('log-collapsed')) toggleLogUI()
+          setTimeout(() => { log.scrollTop = log.scrollHeight }, 50)
+        }
+      }
+
+      topTabs.addEventListener('click', (e) => {
+        const a = e.target.closest('a[data-tab]')
+        if (!a) return
+        e.preventDefault()
+        setActiveTab(a.dataset.tab)
+      })
 
       function applyLayout() {
         const isSplit = layoutSel.value === 'split'
