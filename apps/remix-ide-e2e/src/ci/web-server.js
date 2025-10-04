@@ -4,6 +4,19 @@ const path = require('path')
 const fs = require('fs')
 const { execSync, spawn } = require('child_process')
 const axios = require('axios')
+const dotenv = require('dotenv')
+
+// Load env from .env.local then .env (best-effort)
+try {
+  const envLocal = path.resolve(process.cwd(), '.env.local')
+  if (fs.existsSync(envLocal)) dotenv.config({ path: envLocal })
+  const env = path.resolve(process.cwd(), '.env')
+  if (fs.existsSync(env)) dotenv.config({ path: env })
+} catch (_) {}
+
+function getCircleToken() {
+  return process.env.CIRCLECI_TOKEN || process.env.CIRCLE_TOKEN || ''
+}
 
 const app = express()
 app.use(express.json())
@@ -13,7 +26,7 @@ const staticDir = path.resolve(__dirname, './web')
 app.use('/', express.static(staticDir))
 
 app.get('/api/status', (req, res) => {
-  const hasToken = Boolean(process.env.CIRCLECI_TOKEN || process.env.CIRCLE_TOKEN)
+  const hasToken = Boolean(getCircleToken())
   let branch = 'unknown'
   try {
     branch = execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
@@ -42,7 +55,7 @@ app.post('/api/trigger', async (req, res) => {
   const { mode, test, browser = 'chrome' } = req.body || {}
   if (!test) return res.status(400).json({ error: 'Missing test (base name) in body' })
   if (mode === 'remote') {
-    if (!process.env.CIRCLECI_TOKEN && !process.env.CIRCLE_TOKEN) {
+    if (!getCircleToken()) {
       return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
     }
     // Call existing trigger script and capture CircleCI URL
@@ -93,7 +106,7 @@ function resolveRepo() {
 
 // Poll CircleCI API for pipeline/workflow/job status
 app.get('/api/ci-status', async (req, res) => {
-  const token = process.env.CIRCLECI_TOKEN || process.env.CIRCLE_TOKEN
+  const token = getCircleToken()
   if (!token) return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
   const pipelineId = String(req.query.pipelineId || '').trim()
   if (!pipelineId) return res.status(400).json({ error: 'pipelineId is required' })
