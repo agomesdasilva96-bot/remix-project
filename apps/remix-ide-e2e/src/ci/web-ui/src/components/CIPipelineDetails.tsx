@@ -7,9 +7,10 @@ interface CIPipelineDetailsProps {
   ciStatus: CIStatusResponse | null
   onLog: (message: string) => void
   pinned: boolean
+  onRefresh?: () => void
 }
 
-export function CIPipelineDetails({ ciStatus, onLog, pinned }: CIPipelineDetailsProps) {
+export function CIPipelineDetails({ ciStatus, onLog, pinned, onRefresh }: CIPipelineDetailsProps) {
   const [expandedArtifacts, setExpandedArtifacts] = useState<Set<number>>(new Set())
   const [artifacts, setArtifacts] = useState<Record<number, { loading: boolean; items: any[] }>>({})
 
@@ -71,6 +72,14 @@ export function CIPipelineDetails({ ciStatus, onLog, pinned }: CIPipelineDetails
     try {
       await api.rerunWorkflow(workflowId, fromFailed)
       onLog(`✓ Rerun workflow ${workflowId} (from_failed: ${fromFailed})`)
+      
+      // Wait a moment for CircleCI to process the rerun, then refresh
+      setTimeout(() => {
+        onLog('Refreshing status to show new workflow...')
+        if (onRefresh) {
+          onRefresh()
+        }
+      }, 2000)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to rerun'
       onLog(`✗ Rerun failed: ${message}`)

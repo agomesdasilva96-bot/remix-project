@@ -27,7 +27,7 @@ function App() {
     setLog(prev => prev + '\n' + message)
   }, [])
 
-  const { ciStatus, startPolling } = useCIStatus(currentPipelineId, appendLog)
+  const { ciStatus, startPolling, forceRefresh } = useCIStatus(currentPipelineId, appendLog)
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -166,6 +166,7 @@ function App() {
                 ciStatus={ciStatus}
                 onLog={appendLog}
                 pinned={false}
+                onRefresh={forceRefresh}
               />
             </div>
           </div>

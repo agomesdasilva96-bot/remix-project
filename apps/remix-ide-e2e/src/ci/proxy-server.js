@@ -54,6 +54,26 @@ app.use(express.json())
 // Serve static files from web-ui/dist
 app.use(express.static(path.join(__dirname, 'web-ui/dist')))
 
+// Get current git branch
+function getCurrentBranch() {
+  try {
+    const { execSync } = require('child_process')
+    return execSync('git rev-parse --abbrev-ref HEAD', { 
+      cwd: projectRoot,
+      stdio: ['ignore', 'pipe', 'ignore'] 
+    }).toString().trim()
+  } catch (_) {
+    return 'master'
+  }
+}
+
+// Status endpoint to get current branch
+app.get('/api/status', (req, res) => {
+  const branch = getCurrentBranch()
+  const hasToken = !!(process.env.CIRCLECI_TOKEN || process.env.CIRCLE_TOKEN)
+  res.json({ branch, hasToken })
+})
+
 // Proxy for triggering pipelines (CORS blocked by CircleCI)
 app.post('/api/trigger', async (req, res) => {
   const { test, browser = 'chrome' } = req.body || {}

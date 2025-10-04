@@ -24,13 +24,28 @@ function getOrgRepo(): { org: string; repo: string } {
   return { org: 'remix-project-org', repo: 'remix-project' }
 }
 
+let cachedBranch: string | null = null
+
 export const api = {
   async getStatus(): Promise<StatusResponse> {
     const token = getToken()
-    // Get current branch from git (we'll just return status)
+    
+    // Get current branch from proxy server
+    if (!cachedBranch) {
+      try {
+        const res = await fetch('/api/status')
+        if (res.ok) {
+          const data = await res.json()
+          cachedBranch = data.branch || 'master'
+        }
+      } catch {
+        cachedBranch = 'master'
+      }
+    }
+    
     return {
       hasToken: !!token,
-      branch: 'master' // Can be enhanced to show actual branch
+      branch: cachedBranch || 'master'
     }
   },
 
@@ -46,16 +61,27 @@ export const api = {
 
     const { org, repo } = getOrgRepo()
     const projectSlug = `gh/${org}/${repo}`
+    
+    // Use cached branch from getStatus
+    const branch = cachedBranch || 'master'
 
     try {
-      const res = await fetch(`${CIRCLECI_API}/project/${projectSlug}/pipeline?branch=master`, {
+      // Note: CircleCI API ignores the branch query parameter for some endpoints
+      // So we fetch recent pipelines and filter client-side
+      const res = await fetch(`${CIRCLECI_API}/project/${projectSlug}/pipeline`, {
         headers: getHeaders()
       })
 
       if (!res.ok) return []
 
       const data = await res.json()
-      return data.items || []
+      const items = data.items || []
+      
+      // Filter by current branch client-side
+      return items.filter((p: any) => {
+        const pipelineBranch = p.vcs?.branch || p.branch
+        return pipelineBranch === branch
+      })
     } catch {
       return []
     }

@@ -47,5 +47,9 @@ export function useCIStatus(pipelineId: string | null, onLog: (message: string) 
     setIsPolling(true)
   }, [])
 
-  return { ciStatus, startPolling, isPolling }
+  const forceRefresh = useCallback(() => {
+    fetchStatus()
+  }, [fetchStatus])
+
+  return { ciStatus, startPolling, isPolling, forceRefresh }
 }
