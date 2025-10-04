@@ -174,3 +174,60 @@ const server = app.listen(PORT, () => {
   const url = `http://127.0.0.1:${PORT}`
   console.log(`[select-test web] Listening at ${url}`)
 })
+
+// --- Extra usability endpoints ---
+
+// Persist CircleCI token to .env.local
+app.post('/api/set-token', express.json(), (req, res) => {
+  const token = (req.body && (req.body.token || '').trim()) || ''
+  if (!token) return res.status(400).json({ error: 'token is required' })
+  try {
+    const envLocal = path.resolve(process.cwd(), '.env.local')
+    let lines = []
+    if (fs.existsSync(envLocal)) {
+      lines = fs.readFileSync(envLocal, 'utf8').split(/\r?\n/)
+    }
+    // Remove existing token lines
+    lines = lines.filter(l => !/^\s*(CIRCLECI_TOKEN|CIRCLE_TOKEN)\s*=/.test(l))
+    lines.push(`CIRCLECI_TOKEN=${token}`)
+    fs.writeFileSync(envLocal, lines.join('\n') + '\n', 'utf8')
+    // Update runtime env
+    process.env.CIRCLECI_TOKEN = token
+    return res.json({ ok: true })
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to persist token', details: e.message })
+  }
+})
+
+// Cancel a running workflow
+app.post('/api/ci/cancel', async (req, res) => {
+  const token = getCircleToken()
+  if (!token) return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
+  const workflowId = String((req.body && req.body.workflowId) || '').trim()
+  if (!workflowId) return res.status(400).json({ error: 'workflowId is required' })
+  try {
+    const r = await axios.post(`https://circleci.com/api/v2/workflow/${workflowId}/cancel`, {}, { headers: { 'Circle-Token': token } })
+    return res.json({ ok: true, result: r.data })
+  } catch (e) {
+    const status = e.response && e.response.status
+    const data = e.response && e.response.data
+    return res.status(status || 500).json({ error: 'Failed to cancel workflow', details: data || e.message })
+  }
+})
+
+// Rerun a workflow (optionally from_failed only)
+app.post('/api/ci/rerun', async (req, res) => {
+  const token = getCircleToken()
+  if (!token) return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
+  const workflowId = String((req.body && req.body.workflowId) || '').trim()
+  const from_failed = Boolean(req.body && req.body.from_failed)
+  if (!workflowId) return res.status(400).json({ error: 'workflowId is required' })
+  try {
+    const r = await axios.post(`https://circleci.com/api/v2/workflow/${workflowId}/rerun`, { from_failed }, { headers: { 'Circle-Token': token } })
+    return res.json({ ok: true, result: r.data })
+  } catch (e) {
+    const status = e.response && e.response.status
+    const data = e.response && e.response.data
+    return res.status(status || 500).json({ error: 'Failed to rerun workflow', details: data || e.message })
+  }
+})

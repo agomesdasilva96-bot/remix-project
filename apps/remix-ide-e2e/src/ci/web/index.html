@@ -54,6 +54,10 @@
         <option value="chrome">chrome</option>
         <option value="firefox">firefox</option>
       </select>
+      <button id="clearLog">Clear log</button>
+      <button id="logMinus">Log -</button>
+      <button id="logPlus">Log +</button>
+      <button id="setToken">Set token</button>
     </div>
     <table>
       <thead>
@@ -66,6 +70,7 @@
       </thead>
       <tbody id="tbody"></tbody>
     </table>
+    <div id="actions" class="row" style="margin-top:.5rem"></div>
   <pre id="log"></pre>
 
     <script>
@@ -76,7 +81,9 @@
       const modeSel = $('#mode')
       const browserSel = $('#browser')
       const log = $('#log')
+  const actions = $('#actions')
       let tests = []
+  let lastStatus = null
 
       async function fetchStatus() {
         const r = await fetch('/api/status')
@@ -103,11 +110,28 @@
       }
 
       async function load() {
+        // Restore settings
+        try {
+          const s = JSON.parse(localStorage.getItem('selectTestSettings') || '{}')
+          if (s.filter) filter.value = s.filter
+          if (s.mode) modeSel.value = s.mode
+          if (s.browser) browserSel.value = s.browser
+        } catch (_) {}
         await fetchStatus()
         const r = await fetch('/api/tests')
         const j = await r.json()
         tests = j.tests || []
         render()
+      }
+
+      function persistSettings() {
+        try {
+          localStorage.setItem('selectTestSettings', JSON.stringify({
+            filter: filter.value,
+            mode: modeSel.value,
+            browser: browserSel.value
+          }))
+        } catch (_) {}
       }
 
       async function trigger(name) {
@@ -149,6 +173,8 @@
             const r = await fetch(`/api/ci-status?pipelineId=${encodeURIComponent(pipelineId)}`)
             const j = await r.json()
             if (!r.ok) throw new Error(j && j.details || 'status error')
+            lastStatus = j
+            renderActions()
             const wfLines = (j.workflows || []).map(wf => `  - ${wf.name}  ${pad(wf.status)}  (id ${wf.id})`).join('\n')
             const counts = j.summary && j.summary.counts ? JSON.stringify(j.summary.counts) : '{}'
             const ui = j.uiUrl ? `\n  ${j.uiUrl}\n` : '\n'
@@ -166,7 +192,68 @@
         log.scrollTop = log.scrollHeight
       }
 
-      filter.oninput = render
+      function renderActions() {
+        actions.innerHTML = ''
+        if (!lastStatus) return
+        // Find a running workflow to offer Cancel
+        const running = (lastStatus.workflows || []).find(wf => String(wf.status).toLowerCase() === 'running')
+        // Find a failed workflow to offer Rerun
+        const failed = (lastStatus.workflows || []).find(wf => String(wf.status).toLowerCase() === 'failed')
+        const buttons = []
+        if (running) {
+          const b = document.createElement('button')
+          b.textContent = `Cancel ${running.name}`
+          b.onclick = () => ciCancel(running.id)
+          buttons.push(b)
+        }
+        if (failed) {
+          const b1 = document.createElement('button')
+          b1.textContent = `Rerun failed: ${failed.name}`
+          b1.onclick = () => ciRerun(failed.id, true)
+          const b2 = document.createElement('button')
+          b2.textContent = `Rerun all: ${failed.name}`
+          b2.onclick = () => ciRerun(failed.id, false)
+          buttons.push(b1, b2)
+        }
+        buttons.forEach(btn => actions.appendChild(btn))
+      }
+
+      async function ciCancel(workflowId) {
+        const r = await fetch('/api/ci/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowId }) })
+        const j = await r.json()
+        log.textContent += `cancel: ${JSON.stringify(j)}\n`
+        log.scrollTop = log.scrollHeight
+      }
+
+      async function ciRerun(workflowId, from_failed) {
+        const r = await fetch('/api/ci/rerun', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workflowId, from_failed }) })
+        const j = await r.json()
+        log.textContent += `rerun: ${JSON.stringify(j)}\n`
+        log.scrollTop = log.scrollHeight
+      }
+
+      filter.oninput = () => { render(); persistSettings() }
+      modeSel.onchange = persistSettings
+      browserSel.onchange = persistSettings
+      // UI helpers
+      $('#clearLog').onclick = () => { log.textContent = '' }
+      $('#logMinus').onclick = () => adjustLog(-5)
+      $('#logPlus').onclick = () => adjustLog(5)
+      $('#setToken').onclick = async () => {
+        const token = prompt('CircleCI token')
+        if (!token) return
+        const r = await fetch('/api/set-token', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }) })
+        const j = await r.json()
+        log.textContent += `set-token: ${JSON.stringify(j)}\n`
+        fetchStatus()
+      }
+
+      function adjustLog(delta) {
+        const root = document.documentElement
+        const cur = parseInt(getComputedStyle(root).getPropertyValue('--log-height'))
+        const next = Math.max(15, Math.min(80, cur + delta))
+        root.style.setProperty('--log-height', next + 'vh')
+      }
       load()
     </script>
   </body>
