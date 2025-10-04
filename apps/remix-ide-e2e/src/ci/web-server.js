@@ -167,7 +167,7 @@ app.get('/api/ci-status', async (req, res) => {
       : undefined
 
     res.json({
-      pipeline: { id: pipelineId, number: pipeline.number, state: pipeline.state, project_slug: pipeline.project_slug },
+      pipeline: { id: pipelineId, number: pipeline.number, state: pipeline.state, project_slug: pipeline.project_slug, parameters: pipeline.parameters },
       workflows,
       jobsByWf,
       summary: { counts, total: workflows.length, done: allDone },
@@ -187,6 +187,26 @@ const server = app.listen(PORT, () => {
 })
 
 // --- Extra usability endpoints ---
+
+// Fetch artifacts for a given job
+app.get('/api/ci-artifacts', async (req, res) => {
+  const token = getCircleToken()
+  if (!token) return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
+  const projectSlug = String(req.query.projectSlug || '').trim()
+  const jobNumber = String(req.query.jobNumber || '').trim()
+  if (!projectSlug || !jobNumber) return res.status(400).json({ error: 'projectSlug and jobNumber are required' })
+  try {
+    const r = await axios.get(`https://circleci.com/api/v2/project/${encodeURIComponent(projectSlug)}/job/${encodeURIComponent(jobNumber)}/artifacts`, {
+      headers: { 'Circle-Token': token }
+    })
+    const items = (r.data && r.data.items) || []
+    return res.json({ ok: true, items })
+  } catch (e) {
+    const status = e.response && e.response.status
+    const data = e.response && e.response.data
+    return res.status(status || 500).json({ error: 'Failed to fetch artifacts', details: data || e.message })
+  }
+})
 
 // Persist CircleCI token to .env.local
 app.post('/api/set-token', express.json(), (req, res) => {
