@@ -18,30 +18,34 @@ function getCircleToken() {
   return process.env.CIRCLECI_TOKEN || process.env.CIRCLE_TOKEN || ''
 }
 
+// Navigate to project root (4 levels up from this file)
+const projectRoot = path.resolve(__dirname, '../../../../')
+console.log(`[select-test web] Project root: ${projectRoot}`)
+
 const app = express()
 app.use(express.json())
 
-// Serve static assets (single-page app)
-const staticDir = path.resolve(__dirname, './web')
+// Serve static assets from the React build
+const staticDir = path.resolve(__dirname, './web-ui/dist')
 app.use('/', express.static(staticDir))
 
 app.get('/api/status', (req, res) => {
   const hasToken = Boolean(getCircleToken())
   let branch = 'unknown'
   try {
-    branch = execSync('git rev-parse --abbrev-ref HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
+    branch = execSync('git rev-parse --abbrev-ref HEAD', { cwd: projectRoot, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim()
   } catch (_) {}
   res.json({ hasToken, branch })
 })
 
 app.get('/api/tests', (req, res) => {
   try {
-    const list = execSync("grep -IRiL \'@disabled\': \\?true apps/remix-ide-e2e/src/tests | sort", { stdio: ['ignore', 'pipe', 'ignore'], shell: '/bin/bash' }).toString()
+    const list = execSync("grep -IRiL \'@disabled\': \\?true apps/remix-ide-e2e/src/tests | sort", { cwd: projectRoot, stdio: ['ignore', 'pipe', 'ignore'], shell: '/bin/bash' }).toString()
     const files = list.split(/\r?\n/).filter(Boolean)
     let tests = files.map((src) => {
       const base = path.basename(src).replace(/\.(js|ts)$/i, '')
-      const dist = path.resolve(process.cwd(), 'dist', src).replace(/\.(ts)$/i, '.js')
-      const distRel = path.relative(process.cwd(), dist)
+      const dist = path.resolve(projectRoot, 'dist', src).replace(/\.(ts)$/i, '.js')
+      const distRel = path.relative(projectRoot, dist)
       const hasDist = fs.existsSync(dist)
       return { base, src, dist: distRel, hasDist }
     })
@@ -64,50 +68,33 @@ app.get('/api/tests', (req, res) => {
 })
 
 app.post('/api/trigger', async (req, res) => {
-  const { mode, test, browser = 'chrome' } = req.body || {}
+  const { test, browser = 'chrome' } = req.body || {}
   if (!test) return res.status(400).json({ error: 'Missing test (base name) in body' })
-  if (mode === 'remote') {
-    if (!getCircleToken()) {
-      return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
-    }
-    // Call existing trigger script and capture CircleCI URL
-    const triggerPath = path.resolve(__dirname, './trigger-circleci.js')
-    const child = spawn('node', [triggerPath, '--pattern', test])
-    let out = ''
-    child.stdout.on('data', (d) => (out += d.toString()))
-    child.stderr.on('data', (d) => (out += d.toString()))
-    child.on('close', (code) => {
-      const m = out.match(/https:\/\/app\.circleci\.com\/[\w\/-]+/)
-      const url = m ? m[0] : undefined
-      const pidm = out.match(/Pipeline id:\s*([a-f0-9-]+)/i)
-      const pipelineId = pidm ? pidm[1] : undefined
-      if (code === 0) return res.json({ ok: true, url, pipelineId, output: out })
-      return res.status(500).json({ ok: false, url, pipelineId, output: out })
-    })
-    return
+  
+  // CircleCI mode only
+  if (!getCircleToken()) {
+    return res.status(401).json({ error: 'Missing CIRCLECI_TOKEN in env' })
   }
-
-  if (mode === 'local') {
-    // Ensure dist exists for local run
-    try {
-      execSync('yarn run build:e2e', { stdio: ['ignore', 'inherit', 'inherit'] })
-    } catch (e) {
-      return res.status(500).json({ error: 'build:e2e failed' })
-    }
-    // Reuse singletest.sh to set up services and run one test
-    const script = path.resolve(process.cwd(), 'apps/remix-ide/ci/singletest.sh')
-    const args = [script, browser, 'nogroup', '1', test]
-    const proc = spawn('bash', args, { stdio: 'inherit' })
-    return res.json({ ok: true, pid: proc.pid })
-  }
-
-  return res.status(400).json({ error: 'Invalid mode. Use local or remote.' })
+  // Call existing trigger script and capture CircleCI URL
+  const triggerPath = path.resolve(__dirname, './trigger-circleci.js')
+  const child = spawn('node', [triggerPath, '--pattern', test])
+  let out = ''
+  child.stdout.on('data', (d) => (out += d.toString()))
+  child.stderr.on('data', (d) => (out += d.toString()))
+  child.on('close', (code) => {
+    const m = out.match(/https:\/\/app\.circleci\.com\/[\w\/-]+/)
+    const url = m ? m[0] : undefined
+    const pidm = out.match(/Pipeline id:\s*([a-f0-9-]+)/i)
+    const pipelineId = pidm ? pidm[1] : undefined
+    if (code === 0) return res.json({ ok: true, url, pipelineId, output: out })
+    return res.status(500).json({ ok: false, url, pipelineId, output: out })
+  })
 })
 
 // Resolve org/repo from git remote origin for building CircleCI UI links
 function resolveRepo() {
   try {
-    const remote = execSync('git config --get remote.origin.url', { stdio: ['ignore', 'pipe', 'ignore'] })
+    const remote = execSync('git config --get remote.origin.url', { cwd: projectRoot, stdio: ['ignore', 'pipe', 'ignore'] })
       .toString()
       .trim()
     const m = remote.match(/github\.com[:/]([^/]+)\/([^/]+?)(\.git)?$/i)
@@ -144,7 +131,7 @@ app.get('/api/ci-status', async (req, res) => {
             const started = j.started_at ? Date.parse(j.started_at) : null
             const stopped = j.stopped_at ? Date.parse(j.stopped_at) : null
             const durationSec = started && stopped ? Math.max(0, Math.round((stopped - started) / 1000)) : null
-            const ui = baseUrl && j.id ? `${baseUrl}/jobs/${j.id}` : undefined
+            const ui = baseUrl && j.job_number ? `${baseUrl}/jobs/${j.job_number}` : undefined
             return { ...j, durationSec, ui }
           })
           jobsByWf[wf.id] = items
@@ -180,12 +167,6 @@ app.get('/api/ci-status', async (req, res) => {
   }
 })
 
-const PORT = Number(process.env.SELECT_TEST_PORT || 5178)
-const server = app.listen(PORT, () => {
-  const url = `http://127.0.0.1:${PORT}`
-  console.log(`[select-test web] Listening at ${url}`)
-})
-
 // --- Extra usability endpoints ---
 
 // Fetch artifacts for a given job
@@ -213,7 +194,7 @@ app.post('/api/set-token', express.json(), (req, res) => {
   const token = (req.body && (req.body.token || '').trim()) || ''
   if (!token) return res.status(400).json({ error: 'token is required' })
   try {
-    const envLocal = path.resolve(process.cwd(), '.env.local')
+    const envLocal = path.resolve(projectRoot, '.env.local')
     let lines = []
     if (fs.existsSync(envLocal)) {
       lines = fs.readFileSync(envLocal, 'utf8').split(/\r?\n/)
@@ -262,3 +243,15 @@ app.post('/api/ci/rerun', async (req, res) => {
     return res.status(status || 500).json({ error: 'Failed to rerun workflow', details: data || e.message })
   }
 })
+
+// SPA fallback - serve index.html for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.resolve(staticDir, 'index.html'))
+})
+
+const PORT = Number(process.env.SELECT_TEST_PORT || 5178)
+const server = app.listen(PORT, () => {
+  const url = `http://127.0.0.1:${PORT}`
+  console.log(`[select-test web] Listening at ${url}`)
+})
+

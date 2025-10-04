@@ -1,0 +1,76 @@
+.log-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--log-height);
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+  overflow: auto;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.875rem;
+  white-space: pre-wrap;
+  z-index: 1000;
+  transition: height 0.2s, padding 0.2s;
+}
+
+.log-panel.collapsed {
+  height: 0;
+  padding: 0;
+  border-top: 0;
+  overflow: hidden;
+}
+
+.log-resizer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: var(--log-height);
+  height: 4px;
+  background: var(--border-color);
+  cursor: ns-resize;
+  z-index: 1001;
+  transition: background 0.2s;
+}
+
+.log-resizer:hover,
+.log-resizer.dragging {
+  background: var(--accent);
+  height: 6px;
+}
+
+.log-resizer.collapsed {
+  display: none;
+}
+
+.log-header {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.log-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1100;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 1.25rem;
+  padding: 0.5rem 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.log-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
