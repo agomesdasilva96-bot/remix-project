@@ -3,7 +3,6 @@ import { CustomTopbarMenu, CustomToggle } from '@remix-ui/helper'
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { Button, ButtonGroup, Dropdown, Overlay, Popover } from 'react-bootstrap'
 import { remote } from '@remix-api'
-import { FiMoreVertical } from 'react-icons/fi'
 import { TopbarContext } from '../context/topbarContext'
 import { getWorkspaces } from 'libs/remix-ui/workspace/src/lib/actions'
 import { WorkspaceMetadata } from 'libs/remix-ui/workspace/src/lib/types'
@@ -202,7 +201,7 @@ export const WorkspacesDropdown: React.FC<WorkspacesDropdownProps> = ({ menuItem
                     } }
                     data-id="workspacesubMenuIcon"
                   >
-                    <FiMoreVertical size={18} />
+                    <i className="fas fa-ellipsis-v" style={{ fontSize: '18px' }}></i>
                   </Button>
 
                   <Overlay
