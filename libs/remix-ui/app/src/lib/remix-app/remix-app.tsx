@@ -34,6 +34,9 @@ const RemixApp = (props: IRemixAppUi) => {
     code: 'en',
     messages: {}
   })
+
+  const randomchange = Math.random().toString(36).substring(7)
+  console.log(`%c Remix IDE v10.14.0 - ${randomchange} `, 'background: #24292e; color: #fff; padding:5px 0;') // eslint-disable-line no-console
   const sidePanelRef = useRef(null)
   const pinnedPanelRef = useRef(null)
 
