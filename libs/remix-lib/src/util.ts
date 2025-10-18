@@ -2,7 +2,7 @@
 import { hash } from '@remix-project/remix-lib'
 import { setLengthLeft, toBytes, addHexPrefix } from '@ethereumjs/util'
 import stringSimilarity from 'string-similarity'
-import { BN } from 'bn.js'
+import BN from 'bn.js'
 import { isBigInt } from 'web3-validator'
 
 /*

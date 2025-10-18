@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import * as remixLib from '@remix-project/remix-lib';
 import { ContractGUI } from '../ContractGUI';
 import { TreeView, TreeViewItem } from '@remix-ui/tree-view'
-import { BN } from 'bn.js';
+import BN from 'bn.js';
 import './index.css';
 import { AppContext } from '../../contexts';
 import { runTransactions } from '../../actions';

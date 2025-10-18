@@ -1,7 +1,7 @@
 'use strict'
 import { bytesToHex } from '@ethereumjs/util'
 import { isHexString } from 'ethjs-util'
-import { BN } from 'bn.js'
+import BN from 'bn.js'
 import { isBigInt } from 'web3-validator'
 
 function convertToPrefixedHex (input) {

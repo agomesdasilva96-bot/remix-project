@@ -1,5 +1,5 @@
 'use strict'
-import { BN } from 'bn.js'
+import BN from 'bn.js'
 import { bytesToHex } from '@ethereumjs/util'
 import { isBigInt } from 'web3-validator'
 

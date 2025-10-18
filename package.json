@@ -1,6 +1,7 @@
 {
   "name": "remix-project",
   "version": "1.2.0-dev",
+  "private": true,
   "license": "MIT",
   "description": "Remix Project Monorepo",
   "main": "index.js",
@@ -419,5 +420,9 @@
     "@ethereumjs/util": "^10.0.0",
     "@ethereumjs/vm": "^10.0.0",
     "@ethereumjs/binarytree": "^10.0.0"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ]
 }

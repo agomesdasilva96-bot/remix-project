@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { FormattedMessage } from 'react-intl';
-import { BN } from 'bn.js';
+import BN from 'bn.js';
 import { CustomTooltip } from '@remix-ui/helper';
 import { AppContext } from '../../contexts';
 
