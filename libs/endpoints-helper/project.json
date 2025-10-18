@@ -1,0 +1,20 @@
+{
+  "name": "endpoints-helper",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/endpoints-helper/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/endpoints-helper",
+        "main": "libs/endpoints-helper/src/index.ts",
+  "tsConfig": "libs/endpoints-helper/tsconfig.lib.json",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildLibsFromSource": false
+      }
+    }
+  },
+  "tags": []
+}

@@ -32,8 +32,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       
-      - name: Build all projects
-        run: yarn build
+      - name: Build all projects (Nx Cloud)
+        run: |
+          NX_VERBOSE_LOGGING=1 yarn nx run-many --target=build --all --cloud --skip-nx-cache=false --parallel=3 -v
         env:
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       

@@ -7,10 +7,10 @@
     }
   },
   "compilerOptions": {
-    "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
@@ -18,7 +18,7 @@
     "importHelpers": true,
     "target": "ES2022",
     "module": "ES2020",
-    "typeRoots": ["node_modules/@types", "libs/**/*.d.ts"],
+  "typeRoots": ["node_modules/@types", "libs/**/*.d.ts", "types"],
     "lib": ["es2017", "es2019", "dom", "dom.iterable"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,

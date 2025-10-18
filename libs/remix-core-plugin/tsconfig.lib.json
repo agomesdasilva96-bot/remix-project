@@ -1,11 +1,20 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "types": ["node"]
+  "types": ["node"],
+  "rootDir": "../../",
+    "baseUrl": ".",
+    "paths": {
+      "@remix-project/remix-debug": ["../../dist/libs/remix-debug/src/index.d.ts"],
+      "@remix-project/remix-lib": ["../../dist/libs/remix-lib/src/index.d.ts"],
+      "@remix-project/remix-solidity": ["../../dist/libs/remix-solidity/src/index.d.ts"],
+      "@remix-project/remix-astwalker": ["../../dist/libs/remix-astwalker/src/index.d.ts"],
+      "@remix-project/remix-url-resolver": ["../../dist/libs/remix-url-resolver/src/index.d.ts"]
+    }
   },
   "exclude": [
     "**/*.spec.ts",
     "tests/"
   ],
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "**/*.tsx"]
 }

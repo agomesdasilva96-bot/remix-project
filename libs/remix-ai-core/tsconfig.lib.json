@@ -4,8 +4,12 @@
     "module": "commonjs",
     "outDir": "../../dist/out-tsc",
     "declaration": true,
-    "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node"],
+    "rootDir": "../../",
+    "baseUrl": ".",
+    "paths": {
+      "@remix-endpoints-helper": ["../../dist/libs/endpoints-helper/src/index.d.ts"]
+    }
   },
   "exclude": [
     "**/*.spec.ts",

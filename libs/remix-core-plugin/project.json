@@ -12,7 +12,8 @@
           "main": "libs/remix-core-plugin/src/index.ts",
           "tsConfig": "libs/remix-core-plugin/tsconfig.lib.json",
           "assets": [],
-          "updateBuildableProjectDepsInPackageJson": false
+          "updateBuildableProjectDepsInPackageJson": true,
+          "buildLibsFromSource": false
         }
       },
       "lint": {

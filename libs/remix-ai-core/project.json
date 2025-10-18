@@ -13,7 +13,8 @@
         "outputPath": "dist/libs/remix-ai-core",
         "main": "libs/remix-ai-core/src/index.ts",
         "tsConfig": "libs/remix-ai-core/tsconfig.lib.json",
-        "updateBuildableProjectDepsInPackageJson": false,
+        "updateBuildableProjectDepsInPackageJson": true,
+        "buildLibsFromSource": false,
         "assets": [
           "libs/remix-ai-core/*.md"
         ]

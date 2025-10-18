@@ -32,7 +32,8 @@ jobs:
       - run: yarn install
       
       - name: Build from NX Cloud cache
-        run: (NX_VERBOSE_LOGGING=1 node --max-old-space-size=4096 ./node_modules/.bin/nx build --cloud --verbose)
+        run: |
+          NX_VERBOSE_LOGGING=1 yarn nx run-many --target=build --all --cloud --skip-nx-cache=false --parallel=3 -v
         env:
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       
@@ -84,7 +85,8 @@ jobs:
       - run: yarn install
       
       - name: Build from NX Cloud cache
-        run: yarn build
+        run: |
+          NX_VERBOSE_LOGGING=1 yarn nx run-many --target=build --all --cloud --skip-nx-cache=false --parallel=3 -v
         env:
           NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
       
