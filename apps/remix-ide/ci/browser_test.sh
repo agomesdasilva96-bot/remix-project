@@ -1,1 +1,0 @@
-../../scripts/ci/browser_test.sh

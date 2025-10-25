@@ -1,1 +1,0 @@
-../../scripts/ci/downloadsoljson.sh

@@ -1,1 +1,0 @@
-../../scripts/ci/copy_resources.sh

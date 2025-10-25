@@ -1,1 +1,0 @@
-../../scripts/ci/deploy_remix-beta.sh

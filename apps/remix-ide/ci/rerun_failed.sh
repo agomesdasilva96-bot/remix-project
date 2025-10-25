@@ -1,1 +1,0 @@
-../../scripts/ci/rerun_failed.sh

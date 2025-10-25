@@ -1,1 +1,0 @@
-../../scripts/ci/build_and_publish_docker_images.sh

@@ -1,1 +1,0 @@
-../../scripts/ci/setup_slither_if_needed.sh
