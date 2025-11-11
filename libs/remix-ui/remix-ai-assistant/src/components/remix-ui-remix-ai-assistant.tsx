@@ -16,6 +16,7 @@ import GroupListMenu from './contextOptMenu'
 import { useOnClickOutside } from './onClickOutsideHook'
 import { useAudioTranscription } from '../hooks/useAudioTranscription'
 import { QueryParams } from '@remix-project/remix-lib'
+import { TutorialMode } from './tutorial/TutorialMode'
 
 export interface RemixUiRemixAiAssistantProps {
   plugin: Plugin
@@ -63,7 +64,7 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
   const [availableModels, setAvailableModels] = useState<string[]>([])
   const [selectedModel, setSelectedModel] = useState<string | null>(null)
   const [isOllamaFailureFallback, setIsOllamaFailureFallback] = useState(false)
-  const [aiMode, setAiMode] = useState<'ask' | 'edit'>('ask')
+  const [aiMode, setAiMode] = useState<'ask' | 'edit' | 'learn'>('ask')
   const [themeTracker, setThemeTracker] = useState(null)
   const [isMaximized, setIsMaximized] = useState(false)
   const historyRef = useRef<HTMLDivElement | null>(null)
@@ -806,25 +807,39 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
       className="d-flex flex-column h-100 w-100 overflow-x-hidden"
       ref={aiChatRef}
     >
-      <section id="remix-ai-chat-history" className="h-83 d-flex flex-column p-2 overflow-x-hidden" style={{ flex: 7, overflowY: 'scroll' }} ref={chatHistoryRef}>
-        <div data-id="remix-ai-assistant-ready"></div>
-        {/* hidden hook for E2E tests: data-streaming="true|false" */}
-        <div
-          data-id="remix-ai-streaming"
-          className='d-none'
-          data-streaming={isStreaming ? 'true' : 'false'}
-        ></div>
-        <ChatHistoryComponent
-          messages={messages}
-          isStreaming={isStreaming}
-          sendPrompt={sendPrompt}
-          recordFeedback={recordFeedback}
-          historyRef={historyRef}
-          theme={themeTracker?.name}
+      {aiMode === 'learn' ? (
+        // Tutorial Mode
+        <TutorialMode
+          plugin={props.plugin}
+          onAskAI={(question, context) => {
+            // Switch to ask mode and send the question with tutorial context
+            setAiMode('ask')
+            const contextualQuestion = `[Tutorial Context: ${context.roadmapTitle} - Step ${context.stepIndex + 1}: ${context.stepTitle}]\n\n${question}`
+            sendPrompt(contextualQuestion)
+          }}
+          onExit={() => setAiMode('ask')}
         />
-      </section>
-      <section id="remix-ai-prompt-area" className="mt-1" style={{ flex: 1 }}
-      >
+      ) : (
+        <>
+          <section id="remix-ai-chat-history" className="h-83 d-flex flex-column p-2 overflow-x-hidden" style={{ flex: 7, overflowY: 'scroll' }} ref={chatHistoryRef}>
+            <div data-id="remix-ai-assistant-ready"></div>
+            {/* hidden hook for E2E tests: data-streaming="true|false" */}
+            <div
+              data-id="remix-ai-streaming"
+              className='d-none'
+              data-streaming={isStreaming ? 'true' : 'false'}
+            ></div>
+            <ChatHistoryComponent
+              messages={messages}
+              isStreaming={isStreaming}
+              sendPrompt={sendPrompt}
+              recordFeedback={recordFeedback}
+              historyRef={historyRef}
+              theme={themeTracker?.name}
+            />
+          </section>
+          <section id="remix-ai-prompt-area" className="mt-1" style={{ flex: 1 }}
+          >
         {showAssistantOptions && (
           <div
             className="pt-2 mb-2 z-3 bg-light border border-text w-75"
@@ -919,6 +934,8 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
           setIsMaximized={setIsMaximized}
         />
       </section>
+        </>
+      )}
     </div>
   )
 })

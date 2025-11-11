@@ -42,8 +42,8 @@ export interface PromptAreaProps {
   aiAssistantGroupList: groupListType[]
   textareaRef?: React.RefObject<HTMLTextAreaElement>
   maximizePanel: () => Promise<void>
-  aiMode: 'ask' | 'edit'
-  setAiMode: React.Dispatch<React.SetStateAction<'ask' | 'edit'>>
+  aiMode: 'ask' | 'edit' | 'learn'
+  setAiMode: React.Dispatch<React.SetStateAction<'ask' | 'edit' | 'learn'>>
   isMaximized: boolean
   setIsMaximized: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -126,7 +126,7 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
           </button>
 
           <div className="d-flex justify-content-center align-items-center gap-2">
-            {/* Ask/Edit Mode Toggle */}
+            {/* Ask/Edit/Learn Mode Toggle */}
             <div className="btn-group btn-group-sm" role="group">
               <button
                 type="button"
@@ -149,6 +149,18 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
                 title="Edit mode - Edit workspace code"
               >
                 Edit
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${aiMode === 'learn' ? 'btn-primary' : 'btn-outline-secondary'} px-2`}
+                onClick={() => {
+                  setAiMode('learn')
+                  trackMatomoEvent({ category: 'ai', action: 'ModeSwitch', name: 'learn', isClick: true })
+                }}
+                title="Learn mode - Interactive tutorials"
+              >
+                <i className="fas fa-graduation-cap me-1"></i>
+                Learn
               </button>
             </div>
             <span

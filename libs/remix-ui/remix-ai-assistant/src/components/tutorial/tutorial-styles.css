@@ -1,0 +1,400 @@
+/* Tutorial Overlay Styles */
+
+/* Pointing Hand Component */
+.tutorial-pointing-hand {
+  position: absolute;
+  z-index: 10000;
+  pointer-events: none;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pulsing animation ring around hand */
+.tutorial-hand-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border: 4px solid #2196F3;
+  border-radius: 50%;
+  opacity: 0;
+  animation: tutorial-pulse 2s ease-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Hand pointing animation - slow */
+.tutorial-hand-animation-slow {
+  animation: tutorial-point-slow 3s ease-in-out infinite;
+}
+
+@keyframes tutorial-point-slow {
+  0%, 100% {
+    transform: translate(0, 0) rotate(var(--rotation, -45deg));
+  }
+  50% {
+    transform: translate(10px, 10px) rotate(var(--rotation, -45deg));
+  }
+}
+
+/* Hand pointing animation - normal */
+.tutorial-hand-animation-normal {
+  animation: tutorial-point-normal 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-point-normal {
+  0%, 100% {
+    transform: translate(0, 0) rotate(var(--rotation, -45deg));
+  }
+  50% {
+    transform: translate(8px, 8px) rotate(var(--rotation, -45deg));
+  }
+}
+
+/* Hand pointing animation - fast */
+.tutorial-hand-animation-fast {
+  animation: tutorial-point-fast 1s ease-in-out infinite;
+}
+
+@keyframes tutorial-point-fast {
+  0%, 100% {
+    transform: translate(0, 0) rotate(var(--rotation, -45deg));
+  }
+  50% {
+    transform: translate(6px, 6px) rotate(var(--rotation, -45deg));
+  }
+}
+
+/* Spotlight effect for highlighted elements (no dark overlay) */
+.tutorial-spotlight {
+  position: relative;
+  z-index: 9999 !important;
+  box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.5),
+              0 0 20px 5px rgba(33, 150, 243, 0.3);
+  border-radius: 4px;
+  transition: all 0.3s ease-in-out;
+  animation: tutorial-highlight-pulse 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-highlight-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.5),
+                0 0 20px 5px rgba(33, 150, 243, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(33, 150, 243, 0.7),
+                0 0 25px 8px rgba(33, 150, 243, 0.5);
+  }
+}
+
+.tutorial-spotlight-subtle {
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3),
+              0 0 15px 3px rgba(33, 150, 243, 0.2);
+}
+
+.tutorial-spotlight-strong {
+  box-shadow: 0 0 0 5px rgba(33, 150, 243, 0.8),
+              0 0 30px 10px rgba(33, 150, 243, 0.6);
+}
+
+/* Tutorial Overlay Backdrop */
+.tutorial-overlay-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  pointer-events: none;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.tutorial-overlay-backdrop.subtle {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.tutorial-overlay-backdrop.strong {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+/* Tutorial Step Card */
+.tutorial-step-card {
+  position: fixed;
+  max-width: 400px;
+  background: var(--bg-color, #ffffff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 10001;
+  animation: tutorial-card-slide-in 0.3s ease-out;
+}
+
+@keyframes tutorial-card-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tutorial-step-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tutorial-step-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-color, #333);
+  margin: 0;
+}
+
+.tutorial-step-card-progress {
+  font-size: 12px;
+  color: var(--secondary-text-color, #666);
+  background: var(--bg-secondary, #f5f5f5);
+  padding: 4px 8px;
+  border-radius: 12px;
+}
+
+.tutorial-step-card-body {
+  padding: 20px;
+}
+
+.tutorial-step-description {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-color, #333);
+  margin-bottom: 16px;
+}
+
+.tutorial-step-hints {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--info-bg, #e3f2fd);
+  border-left: 3px solid var(--info-color, #2196f3);
+  border-radius: 4px;
+}
+
+.tutorial-step-hints-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--info-color, #2196f3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tutorial-step-hints-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.tutorial-step-hints-list li {
+  font-size: 13px;
+  color: var(--text-color, #333);
+  padding: 4px 0;
+  padding-left: 18px;
+  position: relative;
+}
+
+.tutorial-step-hints-list li:before {
+  content: "💡";
+  position: absolute;
+  left: 0;
+}
+
+.tutorial-step-card-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.tutorial-btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tutorial-btn-primary {
+  background: var(--primary-color, #2196f3);
+  color: white;
+}
+
+.tutorial-btn-primary:hover {
+  background: var(--primary-hover, #1976d2);
+}
+
+.tutorial-btn-secondary {
+  background: transparent;
+  color: var(--primary-color, #2196f3);
+  border: 1px solid var(--primary-color, #2196f3);
+}
+
+.tutorial-btn-secondary:hover {
+  background: var(--primary-light, rgba(33, 150, 243, 0.1));
+}
+
+.tutorial-btn-danger {
+  background: transparent;
+  color: var(--danger-color, #f44336);
+  border: none;
+}
+
+.tutorial-btn-danger:hover {
+  background: var(--danger-light, rgba(244, 67, 54, 0.1));
+}
+
+/* Progress Bar */
+.tutorial-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-secondary, #e0e0e0);
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.tutorial-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.4s ease;
+  border-radius: 3px;
+}
+
+/* Roadmap View */
+.tutorial-roadmap-container {
+  padding: 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.tutorial-roadmap-step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.tutorial-roadmap-step::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 30px;
+  bottom: -20px;
+  width: 2px;
+  background: var(--border-color, #e0e0e0);
+}
+
+.tutorial-roadmap-step:last-child::before {
+  display: none;
+}
+
+.tutorial-roadmap-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 16px;
+  background: var(--bg-secondary, #f5f5f5);
+  border: 2px solid var(--border-color, #e0e0e0);
+  position: relative;
+  z-index: 1;
+}
+
+.tutorial-roadmap-icon.completed {
+  background: #4CAF50;
+  border-color: #4CAF50;
+  color: white;
+}
+
+.tutorial-roadmap-icon.current {
+  background: var(--primary-color, #2196f3);
+  border-color: var(--primary-color, #2196f3);
+  color: white;
+  animation: tutorial-pulse-icon 2s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.tutorial-roadmap-content {
+  flex: 1;
+}
+
+.tutorial-roadmap-step-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color, #333);
+  margin-bottom: 4px;
+}
+
+.tutorial-roadmap-step-description {
+  font-size: 13px;
+  color: var(--secondary-text-color, #666);
+  line-height: 1.5;
+}
+
+/* Fade-in animation for tutorial mode */
+.tutorial-mode-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.tutorial-mode-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.tutorial-mode-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tutorial-mode-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
