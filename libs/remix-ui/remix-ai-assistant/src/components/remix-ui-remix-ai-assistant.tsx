@@ -16,6 +16,7 @@ import GroupListMenu from './contextOptMenu'
 import { useOnClickOutside } from './onClickOutsideHook'
 import { useAudioTranscription } from '../hooks/useAudioTranscription'
 import { QueryParams } from '@remix-project/remix-lib'
+import { refinePrompt } from '../services/promptRefinement'
 
 export interface RemixUiRemixAiAssistantProps {
   plugin: Plugin
@@ -88,6 +89,59 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     apiKey: 'fw_3ZZeKZ67JHvZKahmHUvo8XTR',
     model: 'whisper-v3',
     onTranscriptionComplete: async (text) => {
+      const trimmedText = text.trim().toLowerCase()
+
+      // Check if user said "refine"
+      if (trimmedText === 'refine') {
+        if (input && input.trim()) {
+          try {
+            // Show refining status
+            setMessages(prev => [...prev, {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: '***Refining prompt...***',
+              timestamp: Date.now(),
+              sentiment: 'none'
+            }])
+
+            // Call the refinement service
+            const refinedPrompt = await refinePrompt('fw_3ZZeKZ67JHvZKahmHUvo8XTR', input)
+
+            // Remove refining message
+            setMessages(prev => {
+              const last = prev[prev.length - 1]
+              if (last?.content === '***Refining prompt...***') {
+                return prev.slice(0, -1)
+              }
+              return prev
+            })
+
+            // Update the input with refined prompt
+            setInput(refinedPrompt)
+            trackMatomoEvent({ category: 'ai', action: 'remixAI', name: 'PromptRefinement', isClick: true })
+          } catch (error) {
+            console.error('Prompt refinement error:', error)
+            // Remove refining message
+            setMessages(prev => {
+              const last = prev[prev.length - 1]
+              if (last?.content === '***Refining prompt...***') {
+                return prev.slice(0, -1)
+              }
+              return prev
+            })
+            // Show error message
+            setMessages(prev => [...prev, {
+              id: crypto.randomUUID(),
+              role: 'assistant',
+              content: `**Prompt refinement failed.**\n\nError: ${error.message}`,
+              timestamp: Date.now(),
+              sentiment: 'none'
+            }])
+          }
+        }
+        return
+      }
+
       // Check if transcription ends with "run it"
       const shouldAutoSend = text.trim().toLowerCase().endsWith('run it')
 
