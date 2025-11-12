@@ -92,6 +92,18 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
     baseTrackEvent?.<T>(event)
   }
 
+  // Auto-resize textarea based on content
+  useEffect(() => {
+    if (textareaRef?.current) {
+      const textarea = textareaRef.current
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto'
+      // Set height based on content, with min and max limits
+      const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), 300)
+      textarea.style.height = `${newHeight}px`
+    }
+  }, [input, textareaRef])
+
   return (
     <>
       {showContextOptions && (
@@ -161,8 +173,13 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
         <div className="ai-chat-input d-flex flex-column">
           <textarea
             ref={textareaRef}
-            style={{ flexGrow: 1 }}
-            rows={2}
+            style={{
+              flexGrow: 1,
+              minHeight: '60px',
+              maxHeight: '300px',
+              overflow: 'auto',
+              resize: 'none'
+            }}
             className="form-control bg-light"
             value={input}
             disabled={isStreaming}
@@ -175,7 +192,11 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
               setInput(e.target.value)
             }}
             onKeyDown={e => {
-              if (e.key === 'Enter' && !isStreaming) handleSend()
+              if (e.key === 'Enter' && !e.shiftKey && !isStreaming) {
+                e.preventDefault()
+                handleSend()
+              }
+              // Shift+Enter will insert a new line naturally
             }}
             placeholder={
               aiMode === 'ask'

@@ -88,10 +88,24 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     apiKey: 'fw_3ZZeKZ67JHvZKahmHUvo8XTR',
     model: 'whisper-v3',
     onTranscriptionComplete: async (text) => {
-      if (sendPromptRef.current) {
-        await sendPromptRef.current(text)
-        trackMatomoEvent({ category: 'ai', action: 'SpeechToTextPrompt', name: 'SpeechToTextPrompt', isClick: true })
+      // Check if transcription ends with "run it"
+      const shouldAutoSend = text.trim().toLowerCase().endsWith('run it')
+
+      if (shouldAutoSend) {
+        // Remove "run it" from the end and send the prompt
+        const promptText = text.trim().slice(0, -6).trim() // Remove "run it" (6 characters)
+        const finalPrompt = input ? `${input}\n${promptText}` : promptText
+
+        if (sendPromptRef.current && finalPrompt) {
+          setInput('') // Clear input first
+          await sendPromptRef.current(finalPrompt)
+        }
+      } else {
+        // Add transcribed text to the input box
+        setInput(prev => prev ? `${prev}\n${text}` : text)
       }
+
+      trackMatomoEvent({ category: 'ai', action: 'SpeechToTextPrompt', name: 'SpeechToTextPrompt', isClick: true })
     },
     onError: (error) => {
       console.error('Audio transcription error:', error)
