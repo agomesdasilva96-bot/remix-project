@@ -757,6 +757,7 @@ class AppComponent {
     if (isElectron()){
       this.appManager.activatePlugin(['desktopHost'])
     }
+    // await this.appManager.activatePlugin(['compilerArtefacts'])
     await this.appManager.activatePlugin(['udappEnv'])
     await this.appManager.activatePlugin(['udappDeploy'])
   }
