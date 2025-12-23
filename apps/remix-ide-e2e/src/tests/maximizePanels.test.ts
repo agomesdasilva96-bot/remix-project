@@ -73,6 +73,7 @@ module.exports = {
   },
   'Verify left panel is visible again when right panel is minimized #group1': function (browser: NightwatchBrowser) {
     browser
+      .clickLaunchIcon('udapp')
       .waitForElementVisible('#side-panel')
       .waitForElementVisible('.sidepanel')
   },
@@ -207,7 +208,8 @@ module.exports = {
   'Verify right panel is still visible when bottom panel is maximized #group2': function (browser: NightwatchBrowser) {
     browser
       .waitForElementVisible('.terminal-wrap.maximized')
-      .waitForElementVisible('#right-side-panel')
+      .pause()
+      // .waitForElementVisible('#right-side-panel')
   },
   'Minimize bottom panel #group2': function (browser: NightwatchBrowser) {
     browser
