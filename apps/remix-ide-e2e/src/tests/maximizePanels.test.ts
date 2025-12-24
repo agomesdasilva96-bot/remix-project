@@ -208,8 +208,6 @@ module.exports = {
   'Verify right panel is still visible when bottom panel is maximized #group2': function (browser: NightwatchBrowser) {
     browser
       .waitForElementVisible('.terminal-wrap.maximized')
-      .pause()
-      // .waitForElementVisible('#right-side-panel')
   },
   'Minimize bottom panel #group2': function (browser: NightwatchBrowser) {
     browser

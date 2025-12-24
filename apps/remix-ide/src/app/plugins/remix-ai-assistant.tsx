@@ -44,11 +44,7 @@ export class RemixAIAssistant extends ViewPlugin {
   }
 
   async onActivation() {
-    // if (!localStorage.getItem('remixaiassistant_firstload_flag')) {
-    //   this.call('sidePanel', 'pinView', this.profile)
-    //   await this.call('layout', 'maximiseSidePanel')
-    // }
-    // localStorage.setItem('remixaiassistant_firstload_flag', '1')
+
   }
 
   onDeactivation() {}
