@@ -115,7 +115,7 @@ export class Blockchain extends Plugin {
         this.registeredPluginEvents.push(plugin.name)
         this.on(plugin.name, 'chainChanged', async () => {
           if (plugin.name === this.executionContext.executionContext) {
-            this.changeExecutionContext({ context: plugin.name }, null, null, null)
+            await this.changeExecutionContext({ context: plugin.name })
             const network = await this.detectNetwork()
             this.networkStatus = { network, error: null }
             if (network.networkNativeCurrency) this.networkNativeCurrency = network.networkNativeCurrency
@@ -133,11 +133,11 @@ export class Blockchain extends Plugin {
     //  // this.emit('providersChanged')
     // })
     // used to pin and select newly created forked state provider
-    this.on('udapp', 'forkStateProviderAdded', (providerName) => {
+    this.on('udapp', 'forkStateProviderAdded', async (providerName) => {
       const name = `vm-fs-${providerName}`
       trackMatomoEvent(this, { category: 'blockchain', action: 'providerPinned', name: name, isClick: false })
       // this.emit('providersChanged')
-      this.changeExecutionContext({ context: name }, null, null, null)
+      await this.changeExecutionContext({ context: name })
       this.call('notification', 'toast', `New environment '${providerName}' created with forked state.`)
     })
 
@@ -617,7 +617,7 @@ export class Blockchain extends Plugin {
     return determineGasFeesCb
   }
 
-  changeExecutionContext(context, confirmCb, infoCb, cb) {
+  changeExecutionContext(context) {
     if (this.currentRequest && this.currentRequest.from && !(this.currentRequest.from.startsWith('injected') || this.currentRequest.from === 'remixAI' || this.currentRequest.from === 'udappEnv')) {
       // only injected provider can update the provider.
       return
@@ -625,7 +625,7 @@ export class Blockchain extends Plugin {
     if (context.context === 'item-another-chain') {
       this.call('manager', 'activatePlugin', 'environmentExplorer').then(() => this.call('tabs', 'focus', 'environmentExplorer'))
     } else {
-      return this.executionContext.executionContextChange(context, null, confirmCb, infoCb, cb)
+      return this.executionContext.executionContextChange(context)
     }
   }
 
