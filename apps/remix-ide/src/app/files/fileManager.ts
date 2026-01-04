@@ -589,6 +589,10 @@ export default class FileManager extends Plugin {
   }
 
   async closeFile(name) {
+    const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
+    if (!manuallySave) {
+      await this.saveFile(name)
+    }
     delete this.openedFiles[name]
     if (!Object.keys(this.openedFiles).length) {
       this._deps.config.set('currentFile', '')
@@ -653,7 +657,7 @@ export default class FileManager extends Plugin {
           this.emit('fileSaved', path)
           resolve(true)
         }, options)
-      }, options)      
+      }, options)
     })
   }
 
