@@ -22,6 +22,7 @@ module.exports = {
 
   'Should display modal when closing modified file and choose discard #group1': function (browser: NightwatchBrowser) {
     browser
+      .clickLaunchIcon('filePanel')
       .waitForElementVisible('*[data-id="treeViewLitreeViewItemREADME.txt"]')
       .click('li[data-id="treeViewLitreeViewItemREADME.txt"]')
       .addFile('test_discard.txt', { content: '' })

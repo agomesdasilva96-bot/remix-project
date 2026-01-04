@@ -742,6 +742,10 @@ export default class FileManager extends Plugin {
       // we always open the file in the editor, even if it's the same as the current one if the editor is in diff mode
       if (this.currentFile() === file && !this.editor.isDiff) return
 
+      const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
+      if (!manuallySave) {
+        await this.saveFile(file)
+      }
       const provider = resolved.provider
       this._deps.config.set('currentFile', file)
 
