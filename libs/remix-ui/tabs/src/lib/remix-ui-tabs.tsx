@@ -164,7 +164,7 @@ export const TabsUI = (props: TabsUIProps) => {
     const classNameTab = 'nav-item nav-link d-flex justify-content-center align-items-center px-2 py-1 tab' + (index === currentIndexRef.current ? ' active' : '')
     const closeTabsClass = 'close-tabs' + (isModified ? ' close-tabs-modified' : '')
     const invert = props.themeQuality === 'dark' ? 'invert(1)' : 'invert(0)'
-    
+
     const mouseIsHovering = hoveredTabIndex === index
     const showClose = !isModified ? true : mouseIsHovering
     const tooltipText = isModified ? `(unsaved) ${tab.tooltip}` : tab.tooltip
