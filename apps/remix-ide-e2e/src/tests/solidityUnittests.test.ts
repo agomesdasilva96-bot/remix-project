@@ -113,7 +113,7 @@ module.exports = {
       .clickElementAtPosition('.singleTestLabel', 2)
       .scrollAndClick('*[data-id="testTabRunTestsTabRunAction"]')
       .waitForElementContainsText('*[data-id="testTabSolidityUnitTestsOutput"]', 'SyntaxError: No visibility specified', 120000)
-      .waitForElementContainsText('*[data-id="testTabTestsExecutionStoppedError"]', 'The test execution has been stopped because of error(s) in your test file', 120000)
+      .waitForElementContainsText('*[data-id="testTabTest sExecutionStoppedError"]', 'The test execution has been stopped because of error(s) in your test file', 120000)
       .click('#solidityUnittestsOutput *[data-id="tests/compilationError_test.sol"]')
       .pause(1000)
       .getEditorValue((content) => browser.assert.ok(content.indexOf('contract failOnCompilation {') !== -1))

@@ -613,8 +613,9 @@ export default class FileManager extends Plugin {
 
     if (!provider) throw createError({ code: 'ENOENT', message: `${path} not available` })
     // TODO: change provider to Promise
-    return new Promise((resolve, reject) => {
-      if (this.currentFile() === path) {
+    return new Promise(async (resolve, reject) => {
+      const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
+      if (this.currentFile() === path && !manuallySave) {
         const editorContent = this.editor.currentContent()
         if (editorContent) resolve(editorContent)
       }
@@ -703,6 +704,11 @@ export default class FileManager extends Plugin {
   }
 
   async diff(change: commitChange) {
+    const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
+    if (!manuallySave) {
+      await this.saveFile()
+    }
+
     this._deps.config.set('currentFile', '')
     // TODO: Only keep `this.emit` (issue#2210)
     this.emit('noFileSelected')
@@ -739,13 +745,15 @@ export default class FileManager extends Plugin {
       file = this.normalize(file)
       const resolved = this.getPathFromUrl(file)
       file = resolved.file
-      // we always open the file in the editor, even if it's the same as the current one if the editor is in diff mode
-      if (this.currentFile() === file && !this.editor.isDiff) return
 
       const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
       if (!manuallySave) {
         await this.saveFile(file)
       }
+
+      // we always open the file in the editor, even if it's the same as the current one if the editor is in diff mode
+      if (this.currentFile() === file && !this.editor.isDiff) return
+
       const provider = resolved.provider
       this._deps.config.set('currentFile', file)
 
