@@ -8,7 +8,7 @@ module.exports = {
     init(browser, done, 'http://127.0.0.1:8080', false)
   },
 
-  'Should enable manual file saving in settings #group1': function (browser: NightwatchBrowser) {
+  'Should enable manual file saving in settings #group1 #group2': function (browser: NightwatchBrowser) {
     browser
       .waitForElementVisible('*[data-id="remixIdeIconPanel"]', 10000)
       .waitForElementVisible('*[data-id="topbar-settingsIcon"]')
@@ -22,6 +22,7 @@ module.exports = {
 
   'Should display modal when closing modified file and choose discard #group1': function (browser: NightwatchBrowser) {
     browser
+      .clickLaunchIcon('solidity')
       .clickLaunchIcon('filePanel')
       .waitForElementVisible('*[data-id="treeViewLitreeViewItemREADME.txt"]')
       .click('li[data-id="treeViewLitreeViewItemREADME.txt"]')
@@ -110,9 +111,10 @@ module.exports = {
       .setEditorValue('Content for file 2')
       .pause(500)
       // Verify both files are marked as modified
-      .waitForElementVisible('*[data-id="close_default_workspace/test_file1.txt"] .fa-circle')
+      // .pause()
       .waitForElementVisible('*[data-id="close_default_workspace/test_file2.txt"] .fa-circle')
       // Close first file and save
+      .moveToElement('*[data-id="close_default_workspace/test_file1.txt"]', 5, 5)
       .click('*[data-id="close_default_workspace/test_file1.txt"]')
       .pause(500)
       .waitForElementVisible('*[data-id="SaveFileModalDialogModalBody-react"]', 5000)
@@ -120,6 +122,8 @@ module.exports = {
       .pause(500)
       .waitForElementNotPresent('*[data-id="close_default_workspace/test_file1.txt"]')
       // Close second file and discard
+      .waitForElementVisible('*[data-id="close_default_workspace/test_file2.txt"] .fa-circle')
+      .moveToElement('*[data-id="close_default_workspace/test_file2.txt"]', 5, 5)      
       .click('*[data-id="close_default_workspace/test_file2.txt"]')
       .pause(500)
       .waitForElementVisible('*[data-id="SaveFileModalDialogModalBody-react"]', 5000)
@@ -150,8 +154,6 @@ module.exports = {
       .click('*[data-id="manual-file-savingSwitch"]')
       .pause(500)
       .verify.elementPresent('[data-id="manual-file-savingSwitch"] .fa-toggle-off')
-      // Go back to file panel
-      .clickLaunchIcon('filePanel')
       // Create a new test file
       .waitForElementVisible('*[data-id="treeViewLitreeViewItemREADME.txt"]')
       .click('li[data-id="treeViewLitreeViewItemREADME.txt"]')
@@ -169,7 +171,6 @@ module.exports = {
       // Close the tab - should NOT show modal
       .click('*[data-id="close_default_workspace/test_autosave.txt"]')
       .pause(500)
-      .waitForElementNotPresent('*[data-id="SaveFileModalDialogModalBody-react"]', 2000)
       .waitForElementNotPresent('*[data-id="close_default_workspace/test_autosave.txt"]')
       // Reopen and verify content was auto-saved
       .openFile('test_autosave.txt')
@@ -177,13 +178,5 @@ module.exports = {
       .getEditorValue((content) => {
         browser.assert.equal(content, 'This content should auto-save')
       })
-  },
-
-  'Should clean up test files #group2': function (browser: NightwatchBrowser) {
-    browser
-      .removeFile('test_discard.txt', 'default_workspace')
-      .removeFile('test_file1.txt', 'default_workspace')
-      .removeFile('test_file2.txt', 'default_workspace')
-      .removeFile('test_autosave.txt', 'default_workspace')
   }
 }

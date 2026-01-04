@@ -159,10 +159,12 @@ export const TabsUI = (props: TabsUIProps) => {
   }
 
   const renderTab = (tab: Tab, index) => {
+    const isModified = tabsState.modifiedFiles[tab.name]
     const classNameImg = 'my-1 me-1 text-dark ' + tab.iconClass
     const classNameTab = 'nav-item nav-link d-flex justify-content-center align-items-center px-2 py-1 tab' + (index === currentIndexRef.current ? ' active' : '')
+    const closeTabsClass = 'close-tabs' + (isModified ? ' close-tabs-modified' : '')
     const invert = props.themeQuality === 'dark' ? 'invert(1)' : 'invert(0)'
-    const isModified = tabsState.modifiedFiles[tab.name]
+    
     const mouseIsHovering = hoveredTabIndex === index
     const showClose = !isModified ? true : mouseIsHovering
     const tooltipText = isModified ? `(unsaved) ${tab.tooltip}` : tab.tooltip
@@ -182,7 +184,7 @@ export const TabsUI = (props: TabsUIProps) => {
           <span className={`title-tabs ${getFileDecorationClasses(tab)}`}>{tab.title}</span>
           {getFileDecorationIcons(tab)}
           <span
-            className="close-tabs"
+            className={closeTabsClass}
             data-id={`close_${tab.name}`}
             onMouseEnter={() => setHoveredTabIndex(index)}
             onMouseLeave={() => setHoveredTabIndex(null)}
