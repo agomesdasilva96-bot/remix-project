@@ -644,12 +644,16 @@ export default class FileManager extends Plugin {
     // TODO : Add permission
     // TODO : Change Provider to Promise
     return new Promise((resolve, reject) => {
-      provider.set(path, content, async (error) => {
-        if (error) reject(error)
-        this.syncEditor(path)
-        this.emit('fileSaved', path)
-        resolve(true)
-      }, options)
+      provider.get(path, (error, oldContent) => {
+        if (oldContent === content) // no need to rewrite the same content
+          return resolve(true)
+        provider.set(path, content, async (error) => {
+          if (error) reject(error)
+          this.syncEditor(path)
+          this.emit('fileSaved', path)
+          resolve(true)
+        }, options)
+      }, options)      
     })
   }
 
@@ -866,6 +870,7 @@ export default class FileManager extends Plugin {
         if (provider) {
           // use old content as default if save operation fails.
           provider.get(currentFile, (error, oldContent) => {
+            if (oldContent === input) return // does not need to save if content is the same
             provider.set(currentFile, input, (error) => {
               if (error) {
                 if (error.message) this.call('notification', 'toast',
