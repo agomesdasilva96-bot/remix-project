@@ -13,7 +13,8 @@ module.exports = {
       .waitForElementVisible('*[data-id="remixIdeIconPanel"]', 10000)
       .waitForElementVisible('*[data-id="topbar-settingsIcon"]')
       .click('*[data-id="topbar-settingsIcon"]')
-      .waitForElementContainsText('[data-id="settings-sidebar-header"] h2', 'Settings')
+      .pause()
+      .waitForElementContainsText('[data-id="settings-sidebar-header"] h3', 'Settings')
       .waitForElementVisible('*[data-id="manual-file-savingSwitch"]')
       .click('*[data-id="manual-file-savingSwitch"]')
       .pause(500)
@@ -149,7 +150,7 @@ module.exports = {
       // Open settings and disable manual file saving
       .waitForElementVisible('*[data-id="topbar-settingsIcon"]')
       .click('*[data-id="topbar-settingsIcon"]')
-      .waitForElementContainsText('[data-id="settings-sidebar-header"] h2', 'Settings')
+      .waitForElementContainsText('[data-id="settings-sidebar-header"] h3', 'Settings')
       .waitForElementVisible('*[data-id="manual-file-savingSwitch"]')
       .click('*[data-id="manual-file-savingSwitch"]')
       .pause(500)
