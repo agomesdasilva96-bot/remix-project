@@ -1,7 +1,5 @@
 import { ActivityType } from "../lib/types"
 import React, { MutableRefObject, Ref, useContext, useEffect, useRef, useState } from 'react'
-import GroupListMenu from "./contextOptMenu"
-import { AiContextType, groupListType } from '../types/componentTypes'
 import { AiAssistantType } from '../types/componentTypes'
 import { AIEvent, MatomoEvent } from '@remix-api';
 import { TrackingContext } from '@remix-ide/tracking'
@@ -13,21 +11,14 @@ export interface PromptAreaProps {
   setInput: React.Dispatch<React.SetStateAction<string>>
   isStreaming: boolean
   handleSend: () => void
-  showContextOptions: boolean
-  setShowContextOptions: React.Dispatch<React.SetStateAction<boolean>>
   showAssistantOptions: boolean
   setShowAssistantOptions: React.Dispatch<React.SetStateAction<boolean>>
   showModelOptions: boolean
   setShowModelOptions: React.Dispatch<React.SetStateAction<boolean>>
-  contextChoice: AiContextType
-  setContextChoice: React.Dispatch<React.SetStateAction<AiContextType>>
   assistantChoice: AiAssistantType
   setAssistantChoice: React.Dispatch<React.SetStateAction<AiAssistantType>>
   availableModels: string[]
   selectedModel: string | null
-  contextFiles: string[]
-  clearContext: () => void
-  handleAddContext: () => void
   handleSetAssistant: () => void
   handleSetModel: () => void
   handleModelSelection: (modelName: string) => void
@@ -35,15 +26,10 @@ export interface PromptAreaProps {
   handleRecord: () => void
   isRecording: boolean
   dispatchActivity: (type: ActivityType, payload?: any) => void
-  contextBtnRef: React.RefObject<HTMLButtonElement>
   modelBtnRef: React.RefObject<HTMLButtonElement>
   modelSelectorBtnRef: React.RefObject<HTMLButtonElement>
-  aiContextGroupList: groupListType[]
-  aiAssistantGroupList: groupListType[]
   textareaRef?: React.RefObject<HTMLTextAreaElement>
   maximizePanel: () => Promise<void>
-  aiMode: 'ask' | 'edit'
-  setAiMode: React.Dispatch<React.SetStateAction<'ask' | 'edit'>>
   isMaximized: boolean
   setIsMaximized: React.Dispatch<React.SetStateAction<boolean>>
 }
@@ -53,21 +39,14 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
   setInput,
   isStreaming,
   handleSend,
-  showContextOptions,
-  setShowContextOptions,
   showAssistantOptions,
   setShowAssistantOptions,
   showModelOptions,
   setShowModelOptions,
-  contextChoice,
-  setContextChoice,
   assistantChoice,
   setAssistantChoice,
   availableModels,
   selectedModel,
-  contextFiles,
-  clearContext,
-  handleAddContext,
   handleSetAssistant,
   handleSetModel,
   handleModelSelection,
@@ -75,15 +54,10 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
   handleRecord,
   isRecording,
   dispatchActivity,
-  contextBtnRef,
   modelBtnRef,
   modelSelectorBtnRef,
-  aiContextGroupList,
-  aiAssistantGroupList,
   textareaRef,
   maximizePanel,
-  aiMode,
-  setAiMode,
   isMaximized,
   setIsMaximized
 }) => {
@@ -94,79 +68,15 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
 
   return (
     <>
-      {showContextOptions && (
-        <div
-          className="bg-light mb-1 p-2 border border-text w-75"
-          style={{ borderRadius: '8px' }}
-        >
-          <div className="text-uppercase ms-2 mb-2">Context</div>
-          <GroupListMenu
-            setChoice={setContextChoice}
-            setShowOptions={setShowContextOptions}
-            choice={contextChoice}
-            groupList={aiContextGroupList}
-          />
-        </div>
-      )}
-
       <div
         className="prompt-area d-flex flex-column mx-1 p-2 border border-text bg-light"
       >
-        <div className="d-flex justify-content-between mb-3 border border-end-0 border-start-0 border-top-0 border-bottom pb-1">
-          <button
-            onClick={handleAddContext}
-            data-id="composer-ai-add-context"
-            className="btn btn-dim btn-sm text-secondary small fw-light border border-text rounded"
-            ref={contextBtnRef}
+        <div className="d-flex justify-content-end mb-3 border border-end-0 border-start-0 border-top-0 border-bottom pb-1">
+          <span
+            className="badge align-self-center text-bg-info fw-light rounded"
           >
-            <span>{}</span>{contextChoice === 'none' && <span data-id="aiContext-file">{'Select Context'}</span>}
-            {contextChoice === 'workspace' && <span data-id="aiContext-workspace">{'Workspace'}</span>}
-            {contextChoice === 'opened' && <span data-id="aiContext-opened">{'Open Files'}</span>}
-            {contextChoice === 'current' && <span data-id="aiContext-current">{'Current File'}</span>}
-          </button>
-
-          <div className="d-flex justify-content-center align-items-center gap-2">
-            {/* Ask/Edit Mode Toggle */}
-            <div className="btn-group btn-group-sm" role="group">
-              <CustomTooltip
-                placement="top"
-                tooltipText="Ask mode - Chat with AI"
-                tooltipId="askModeTooltip"
-              >
-                <button
-                  type="button"
-                  className={`btn btn-sm ${aiMode === 'ask' ? 'btn-primary' : 'btn-outline-secondary'} px-2`}
-                  onClick={() => {
-                    setAiMode('ask')
-                    trackMatomoEvent({ category: 'ai', action: 'ModeSwitch', name: 'ask', isClick: true })
-                  }}
-                >
-                  Ask
-                </button>
-              </CustomTooltip>
-              <CustomTooltip
-                placement="top"
-                tooltipText="Edit mode - Edit workspace code"
-                tooltipId="editModeTooltip"
-              >
-                <button
-                  type="button"
-                  className={`btn btn-sm ${aiMode === 'edit' ? 'btn-primary' : 'btn-outline-secondary'} px-2`}
-                  onClick={() => {
-                    setAiMode('edit')
-                    trackMatomoEvent({ category: 'ai', action: 'ModeSwitch', name: 'edit', isClick: true })
-                  }}
-                >
-                  Edit
-                </button>
-              </CustomTooltip>
-            </div>
-            <span
-              className="badge align-self-center text-bg-info fw-light rounded"
-            >
-              AI Beta
-            </span>
-          </div>
+            AI Beta
+          </span>
         </div>
         <div className="ai-chat-input d-flex flex-column">
           <textarea
@@ -187,11 +97,7 @@ export const PromptArea: React.FC<PromptAreaProps> = ({
             onKeyDown={e => {
               if (e.key === 'Enter' && !isStreaming) handleSend()
             }}
-            placeholder={
-              aiMode === 'ask'
-                ? "Select context and ask me anything!"
-                : "Edit my codebase, generate new contracts ..."
-            }
+            placeholder="Ask me anything about your code or generate new contracts..."
           />
 
           <div className="d-flex justify-content-between">

@@ -519,36 +519,56 @@ export class RemixAIPlugin extends Plugin {
     throw new Error('MCP provider not active');
   }
 
+  private validateMCPServerConfig(savedServers: IMCPServer[]): boolean {
+    const defaultServerNames = new Set(mcpDefaultServersConfig.defaultServers.map(s => s.name));
+    const savedServerNames = new Set(savedServers.map(s => s.name));
+
+    for (const defaultName of defaultServerNames) {
+      if (!savedServerNames.has(defaultName)) {
+        console.warn(`[RemixAI Plugin] Default MCP server "${defaultName}" not found in saved config. Falling back to defaults.`);
+        return false;
+      }
+    }
+    return true;
+  }
+
   async loadMCPServersFromSettings(): Promise<void> {
     try {
       const savedServers = await this.call('settings', 'get', 'settings/mcp/servers');
       if (savedServers) {
         const loadedServers = JSON.parse(savedServers);
-        // Get built-in servers from config file
-        const builtInServers: IMCPServer[] = mcpDefaultServersConfig.defaultServers.filter(s => s.isBuiltIn);
 
-        // Add built-in servers if they don't exist, or ensure they're enabled if they do
-        for (const builtInServer of builtInServers) {
-          const existingServer = loadedServers.find(s => s.name === builtInServer.name);
-          if (!existingServer) {
-            loadedServers.push(builtInServer);
-          } else if (!existingServer.enabled || !existingServer.isBuiltIn) {
-            // Force enable and mark as built-in
-            existingServer.enabled = true;
-            existingServer.isBuiltIn = true;
+        if (!this.validateMCPServerConfig(loadedServers)) {
+          console.log('[RemixAI Plugin] MCP server configuration mismatch detected. Resetting to defaults.');
+          const defaultServers: IMCPServer[] = mcpDefaultServersConfig.defaultServers;
+          this.mcpServers = defaultServers;
+          await this.call('settings', 'set', 'settings/mcp/servers', JSON.stringify(defaultServers));
+        } else {
+          const builtInServers: IMCPServer[] = mcpDefaultServersConfig.defaultServers.filter(s => s.isBuiltIn);
+
+          // Add built-in servers if they don't exist, or ensure they're enabled if they do
+          for (const builtInServer of builtInServers) {
+            const existingServer = loadedServers.find((s: IMCPServer) => s.name === builtInServer.name);
+            if (!existingServer) {
+              loadedServers.push(builtInServer);
+            } else if (!existingServer.enabled || !existingServer.isBuiltIn) {
+              // Force enable and mark as built-in
+              existingServer.enabled = true;
+              existingServer.isBuiltIn = true;
+            }
           }
-        }
 
-        this.mcpServers = loadedServers;
-        const originalServers = JSON.parse(savedServers);
-        const serversChanged = loadedServers.length !== originalServers.length ||
-                               loadedServers.some(server => {
-                                 const original = originalServers.find(s => s.name === server.name);
-                                 return !original || (server.isBuiltIn && (!original.enabled || !original.isBuiltIn));
-                               });
+          this.mcpServers = loadedServers;
+          const originalServers = JSON.parse(savedServers);
+          const serversChanged = loadedServers.length !== originalServers.length ||
+                                 loadedServers.some((server: IMCPServer) => {
+                                   const original = originalServers.find((s: IMCPServer) => s.name === server.name);
+                                   return !original || (server.isBuiltIn && (!original.enabled || !original.isBuiltIn));
+                                 });
 
-        if (serversChanged) {
-          await this.call('settings', 'set', 'settings/mcp/servers', JSON.stringify(loadedServers));
+          if (serversChanged) {
+            await this.call('settings', 'set', 'settings/mcp/servers', JSON.stringify(loadedServers));
+          }
         }
       } else {
         // Initialize with default MCP servers from config file

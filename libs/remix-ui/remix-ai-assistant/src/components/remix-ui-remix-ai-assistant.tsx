@@ -44,14 +44,10 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
   const [messages, setMessages] = useState<ChatMessage[]>(props.initialMessages || [])
   const [input, setInput] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
-  const [showContextOptions, setShowContextOptions] = useState(false)
   const [showAssistantOptions, setShowAssistantOptions] = useState(false)
   const [showModelOptions, setShowModelOptions] = useState(false)
   const [assistantChoice, setAssistantChoice] = useState<'openai' | 'mistralai' | 'anthropic' | 'ollama'>(
     'mistralai'
-  )
-  const [contextChoice, setContextChoice] = useState<'none' | 'current' | 'opened' | 'workspace'>(
-    'none'
   )
   const [aiAssistantHeight, setAiAssistantHeight] = useState(window.innerHeight < 750 ? 87 : window.innerHeight < 1000 ? 89.6 : 92)
 
@@ -67,13 +63,11 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
   const [availableModels, setAvailableModels] = useState<string[]>([])
   const [selectedModel, setSelectedModel] = useState<string | null>(null)
   const [isOllamaFailureFallback, setIsOllamaFailureFallback] = useState(false)
-  const [aiMode, setAiMode] = useState<'ask' | 'edit'>('ask')
   const [themeTracker, setThemeTracker] = useState(null)
   const [isMaximized, setIsMaximized] = useState(false)
   const historyRef = useRef<HTMLDivElement | null>(null)
   const modelBtnRef = useRef(null)
   const modelSelectorBtnRef = useRef(null)
-  const contextBtnRef = useRef(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const aiChatRef = useRef<HTMLDivElement>(null)
   const userHasScrolledRef = useRef(false)
@@ -148,45 +142,13 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     }
   }, [isTranscribing])
 
-  useOnClickOutside([modelBtnRef, contextBtnRef], () => setShowAssistantOptions(false))
-  useOnClickOutside([modelBtnRef, contextBtnRef], () => setShowContextOptions(false))
+  useOnClickOutside([modelBtnRef], () => setShowAssistantOptions(false))
   useOnClickOutside([modelSelectorBtnRef], () => setShowModelOptions(false))
 
   const getBoundingRect = (ref: MutableRefObject<any>) => ref.current?.getBoundingClientRect()
   const calcAndConvertToDvh = (coordValue: number) => (coordValue / window.innerHeight) * 100
   const calcAndConvertToDvw = (coordValue: number) => (coordValue / window.innerWidth) * 100
   const chatCmdParser = new ChatCommandParser(props.plugin)
-
-  const aiContextGroupList: groupListType[] = [
-    {
-      label: 'None',
-      bodyText: 'Uses no context',
-      icon: 'fa-solid fa-check',
-      stateValue: 'none',
-      dataId: 'composer-ai-context-none'
-    },
-    {
-      label: 'Current file',
-      bodyText: 'Uses the current file in the editor as context',
-      icon: 'fa-solid fa-check',
-      stateValue: 'current',
-      dataId: 'currentFile-context-option'
-    },
-    {
-      label: 'All opened files',
-      bodyText: 'Uses all files opened in the editor as context',
-      icon: 'fa-solid fa-check',
-      stateValue: 'opened',
-      dataId: 'allOpenedFiles-context-option'
-    },
-    {
-      label: 'Workspace',
-      bodyText: 'Uses the current workspace as context',
-      icon: 'fa-solid fa-check',
-      stateValue: 'workspace',
-      dataId: 'workspace-context-option'
-    }
-  ]
 
   const aiAssistantGroupList: groupListType[] = [
     {
@@ -225,70 +187,12 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     },
     [props.onActivity]
   )
-  const [contextFiles, setContextFiles] = useState<string[]>([])
-  const clearContext = () => {
-    setContextChoice('none')
-    setContextFiles([])
-    props.plugin.call('remixAI', 'setContextFiles', { context: 'none' })
-  }
-  const refreshContext = useCallback(async (choice: typeof contextChoice) => {
-    try {
-      let files: string[] = []
-      switch (choice) {
-      case 'none':
-        await props.plugin.call('remixAI', 'setContextFiles', { context: 'none' })
-        files = []
-        break
-      case 'current':
-        {
-          trackMatomoEvent({ category: 'ai', action: 'remixAI', name: 'AddingAIContext', value: choice, isClick: true })
-          const f = await props.plugin.call('fileManager', 'getCurrentFile')
-          if (f) files = [f]
-          await props.plugin.call('remixAI', 'setContextFiles', { context: 'currentFile' })
-        }
-        break
-      case 'opened':
-        {
-          trackMatomoEvent({ category: 'ai', action: 'remixAI', name: 'AddingAIContext', value: choice, isClick: true })
-          const res = await props.plugin.call('fileManager', 'getOpenedFiles')
-          if (Array.isArray(res)) {
-            files = res
-          } else if (res && typeof res === 'object') {
-            files = Object.values(res) as string[]
-          }
-          await props.plugin.call('remixAI', 'setContextFiles', { context: 'openedFiles' })
-        }
-        break
-      case 'workspace':
-        {
-          trackMatomoEvent({ category: 'ai', action: 'remixAI', name: 'AddingAIContext', value: choice, isClick: true })
-          await props.plugin.call('remixAI', 'setContextFiles', { context: 'workspace' })
-          files = ['@workspace']
-        }
-        break
-      }
-      setContextFiles(files)
-    } catch (err) {
-      console.error('Failed to refresh context:', err)
-    }
-  }, [props.plugin])
 
   useEffect(() => {
     if (props.plugin.externalMessage) {
       setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: props.plugin.externalMessage, timestamp: Date.now(), sentiment: 'none' }])
     }
   }, [props.plugin.externalMessage])
-
-  useEffect(() => {
-    const update = () => refreshContext(contextChoice)
-
-    if (contextChoice === 'current' || contextChoice === 'opened') {
-      props.plugin.on('fileManager', 'currentFileChanged', update)
-      props.plugin.on('fileManager', 'fileClosed', update)
-      return () =>
-        props.plugin.off('fileManager', 'currentFileChanged')
-    }
-  }, [contextChoice, refreshContext, props.plugin])
 
   // useEffect(() => {
   //   const fetchAssistantChoice = async () => {
@@ -622,34 +526,13 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     [isStreaming, props.plugin]
   )
 
-  const handleGenerateWorkspaceWithPrompt = useCallback(async (prompt: string) => {
-    dispatchActivity('button', 'generateWorkspace')
-    if (prompt && prompt.trim()) {
-      await sendPrompt(`/workspace ${prompt.trim()}`)
-      trackMatomoEvent<AIEvent>({ category: 'ai', action: 'GenerateNewAIWorkspaceFromEditMode', name: prompt, isClick: true })
-    }
-  }, [sendPrompt])
-
   const handleSend = useCallback(async () => {
-    if (aiMode === 'ask') {
-      await sendPrompt(input)
-    } else if (aiMode === 'edit') {
-      // Call generateWorkspace for edit mode with the current input
-      await handleGenerateWorkspaceWithPrompt(input)
-    }
+    await sendPrompt(input)
     setInput('')
-  }, [input, sendPrompt, aiMode, handleGenerateWorkspaceWithPrompt])
-
-  // Added handlers for special command buttons (assumed to exist)
-  const handleAddContext = useCallback(() => {
-    dispatchActivity('button', 'addContext')
-    setShowAssistantOptions(false)
-    setShowContextOptions(prev => !prev)
-  }, [])
+  }, [input, sendPrompt])
 
   const handleSetAssistant = useCallback(() => {
     dispatchActivity('button', 'setAssistant')
-    setShowContextOptions(false)
     setShowAssistantOptions(prev => !prev)
   }, [])
 
@@ -812,11 +695,6 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
     }
     trackMatomoEvent<AIEvent>({ category: 'ai', action: 'SetOllamaModel', name: modelName, isClick: true })
   }, [props.plugin, selectedModel])
-
-  // refresh context whenever selection changes (even if selector is closed)
-  useEffect(() => {
-    refreshContext(contextChoice)
-  }, [contextChoice, refreshContext])
 
   const modalMessage = () => {
     return (
@@ -996,21 +874,14 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
           setInput={setInput}
           isStreaming={isStreaming}
           handleSend={handleSend}
-          showContextOptions={showContextOptions}
-          setShowContextOptions={setShowContextOptions}
           showAssistantOptions={showAssistantOptions}
           setShowAssistantOptions={setShowAssistantOptions}
           showModelOptions={showModelOptions}
           setShowModelOptions={setShowModelOptions}
-          contextChoice={contextChoice}
-          setContextChoice={setContextChoice}
           assistantChoice={assistantChoice}
           setAssistantChoice={setAssistantChoice}
           availableModels={availableModels}
           selectedModel={selectedModel}
-          contextFiles={contextFiles}
-          clearContext={clearContext}
-          handleAddContext={handleAddContext}
           handleSetAssistant={handleSetAssistant}
           handleSetModel={handleSetModel}
           handleModelSelection={handleModelSelection}
@@ -1018,14 +889,9 @@ export const RemixUiRemixAiAssistant = React.forwardRef<
           handleRecord={handleRecord}
           isRecording={isRecording}
           dispatchActivity={dispatchActivity}
-          contextBtnRef={contextBtnRef}
           modelBtnRef={modelBtnRef}
           modelSelectorBtnRef={modelSelectorBtnRef}
-          aiContextGroupList={aiContextGroupList}
-          aiAssistantGroupList={aiAssistantGroupList}
           textareaRef={textareaRef}
-          aiMode={aiMode}
-          setAiMode={setAiMode}
           isMaximized={isMaximized}
           setIsMaximized={setIsMaximized}
         />
