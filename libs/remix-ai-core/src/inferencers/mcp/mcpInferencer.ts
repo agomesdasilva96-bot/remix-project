@@ -41,12 +41,13 @@ function trackMatomoEvent(category: string, action: string, name?: string) {
 export class MCPInferencer extends RemoteInferencer implements ICompletions, IGeneration {
   private mcpClients: Map<string, MCPClient> = new Map();
   private connectionStatuses: Map<string, IMCPConnectionStatus> = new Map();
-  private resourceCache: Map<string, IMCPResourceContent> = new Map();
+  private resourceCache: Map<string, { content: IMCPResourceContent, timestamp: number }> = new Map();
   private intentAnalyzer: IntentAnalyzer = new IntentAnalyzer();
   private resourceScoring: ResourceScoring = new ResourceScoring();
   private remixMCPServer?: any; // Internal RemixMCPServer instance
   private MAX_TOOL_EXECUTIONS = 10;
   private baseInferencer: RemoteInferencer; // The actual inferencer to use (could be Ollama or Remote)
+  private readonly CACHE_TTL = 300000; // 5 minutes in milliseconds
 
   constructor(servers: IMCPServer[] = [], apiUrl?: string, completionUrl?: string, remixMCPServer?: any, baseInferencer?: RemoteInferencer) {
     super(apiUrl, completionUrl);
@@ -122,6 +123,11 @@ export class MCPInferencer extends RemoteInferencer implements ICompletions, IGe
 
   async resetResourceCache(){
     this.resourceCache.clear()
+  }
+
+  private isCacheValid(cachedEntry: { content: IMCPResourceContent, timestamp: number }): boolean {
+    const now = Date.now();
+    return (now - cachedEntry.timestamp) < this.CACHE_TTL;
   }
 
   async addMCPServer(server: IMCPServer): Promise<void> {
@@ -301,10 +307,23 @@ export class MCPInferencer extends RemoteInferencer implements ICompletions, IGe
 
         try {
           // Try to get from cache first
-          let content = null //this.resourceCache.get(resource.uri);
-          const client = this.mcpClients.get(serverName);
-          if (client) {
-            content = await client.readResource(resource.uri);
+          let content: IMCPResourceContent | null = null;
+          const cachedEntry = this.resourceCache.get(resource.uri);
+
+          if (cachedEntry && this.isCacheValid(cachedEntry)) {
+            console.log(`[MCPInferencer] Using cached resource: ${resource.uri}`);
+            content = cachedEntry.content;
+          } else {
+            const client = this.mcpClients.get(serverName);
+            if (client) {
+              content = await client.readResource(resource.uri);
+              if (content) {
+                this.resourceCache.set(resource.uri, {
+                  content,
+                  timestamp: Date.now()
+                });
+              }
+            }
           }
 
           if (content?.text) {
@@ -349,7 +368,23 @@ export class MCPInferencer extends RemoteInferencer implements ICompletions, IGe
             continue;
           }
 
-          const content = await client.readResource(resource.uri);
+          let content: IMCPResourceContent;
+          const cachedEntry = this.resourceCache.get(resource.uri);
+
+          if (cachedEntry && this.isCacheValid(cachedEntry)) {
+            console.log(`[MCPInferencer] Using cached resource: ${resource.uri}`);
+            content = cachedEntry.content;
+          } else {
+            content = await client.readResource(resource.uri);
+            // Cache the fetched content
+            if (content) {
+              this.resourceCache.set(resource.uri, {
+                content,
+                timestamp: Date.now()
+              });
+            }
+          }
+
           if (content.text) {
             mcpContext += `\n--- Resource: ${resource.name} (${resource.uri}) ---\n`;
             mcpContext += content.text;

@@ -101,8 +101,15 @@ export class ProjectResourceProvider extends BaseResourceProvider {
     plugin: Plugin,
     path: string,
     resources: IMCPResource[],
-    visited: Set<string> = new Set()
+    visited: Set<string> = new Set(),
+    currentDepth: number = 0,
+    maxDepth: number = 10
   ): Promise<void> {
+    if (currentDepth >= maxDepth) {
+      console.warn(`[ProjectResourceProvider] Max depth ${maxDepth} reached at: ${path}`);
+      return;
+    }
+
     if (path.startsWith('/')) {
       path = path.substring(1);
     }
@@ -122,12 +129,17 @@ export class ProjectResourceProvider extends BaseResourceProvider {
         // Process directory
         const files = await plugin.call('fileManager', 'readdir', path);
 
-        // Handle case where files is an object with file/folder names as keys
         const fileList = Array.isArray(files) ? files : Object.keys(files);
 
-        for (const file of fileList) {
-          const fullPath = file;
-          await this.collectProjectResources(plugin, fullPath, resources, visited);
+        // Process files in parallel with batching to avoid overwhelming the system
+        const BATCH_SIZE = 10;
+        for (let i = 0; i < fileList.length; i += BATCH_SIZE) {
+          const batch = fileList.slice(i, i + BATCH_SIZE);
+          await Promise.all(
+            batch.map(file =>
+              this.collectProjectResources(plugin, file, resources, visited, currentDepth + 1, maxDepth)
+            )
+          );
         }
       } else {
         // Process file
@@ -271,7 +283,14 @@ export class ProjectResourceProvider extends BaseResourceProvider {
   }
 
   private async buildDirectoryTree(plugin: Plugin, path: string, maxDepth = 10): Promise<any> {
-    if (maxDepth <= 0) return { name: '...', type: 'truncated' };
+    if (maxDepth <= 0) {
+      console.warn(`[ProjectResourceProvider] Directory tree max depth reached at: ${path}`);
+      return {
+        name: '...',
+        type: 'truncated',
+        message: `Directory traversal truncated at depth limit`
+      };
+    }
 
     try {
       const exists = await plugin.call('fileManager', 'exists', path);
@@ -288,12 +307,19 @@ export class ProjectResourceProvider extends BaseResourceProvider {
           // Handle case where files is an object with file/folder names as keys
           const fileList = Array.isArray(files) ? files : Object.keys(files);
 
-          for (const file of fileList.slice(0, 100)) { // Limit to prevent memory issues
-            const fullPath = file;
-            if (!file.startsWith('.') && !file.includes('node_modules')) {
-              const child = await this.buildDirectoryTree(plugin, fullPath, maxDepth - 1);
-              if (child) children.push(child);
-            }
+          // Limit to prevent memory issues and filter early
+          const filteredFiles = fileList
+            .filter(file => !file.startsWith('.') && !file.includes('node_modules'))
+            .slice(0, 100);
+
+          const BATCH_SIZE = 10;
+          for (let i = 0; i < filteredFiles.length; i += BATCH_SIZE) {
+            const batch = filteredFiles.slice(i, i + BATCH_SIZE);
+            const batchResults = await Promise.all(
+              batch.map(file => this.buildDirectoryTree(plugin, file, maxDepth - 1))
+            );
+            // Add non-null results to children
+            children.push(...batchResults.filter(child => child !== null));
           }
         } catch (error) {
           children.push({ name: 'error', type: 'error', message: error.message });
