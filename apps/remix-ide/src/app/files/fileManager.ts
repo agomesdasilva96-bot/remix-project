@@ -617,16 +617,19 @@ export default class FileManager extends Plugin {
 
     if (!provider) throw createError({ code: 'ENOENT', message: `${path} not available` })
     // TODO: change provider to Promise
-    return new Promise(async (resolve, reject) => {
-      const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
-      if (this.currentFile() === path && !manuallySave) {
-        const editorContent = this.editor.currentContent()
-        if (editorContent) resolve(editorContent)
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        const manuallySave = await this.call('config', 'getAppParameter', 'manual-file-saving')
+        if (this.currentFile() === path && !manuallySave) {
+          const editorContent = this.editor.currentContent()
+          if (editorContent) resolve(editorContent)
+        }
+        provider.get(path, (err, content) => {
+          if (err) reject(err)
+          resolve(content)
+        }, options)
       }
-      provider.get(path, (err, content) => {
-        if (err) reject(err)
-        resolve(content)
-      }, options)
+      run()
     })
   }
 
