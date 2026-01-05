@@ -666,7 +666,6 @@ export default class Editor extends Plugin {
    * @param {string} path
    */
   discard (path) {
-    console.trace()
     if (this.sessions[path]) {
       this.sessions[path].dispose()
       delete this.sessions[path]
