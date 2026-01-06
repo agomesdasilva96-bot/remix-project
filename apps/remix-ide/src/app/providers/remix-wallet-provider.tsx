@@ -154,7 +154,7 @@ export class RemixWalletProvider extends Plugin implements IProvider {
         id: 'remix-wallet-provider',
         title: 'Connect Remix Wallet',
         message: this.body(),
-        modalType: 'prompt',
+        modalType: 'modal',
         okLabel: 'Connect',
         cancelLabel: 'Cancel',
         okFn: async () => {
