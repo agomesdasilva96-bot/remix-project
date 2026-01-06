@@ -191,6 +191,14 @@ export class RemixWalletProvider extends Plugin implements IProvider {
             
             this.call('notification', 'toast', `Connected to ${this.state.networkName}`)
             
+            // Emit accountsChanged to populate the accounts list
+            const accounts = await this.getAccounts()
+            console.log('[RemixWalletProvider] Connected, accounts:', accounts)
+            setTimeout(() => {
+              console.log('[RemixWalletProvider] Emitting accountsChanged:', accounts)
+              this.emit('accountsChanged', accounts)
+            }, 100)
+            
             resolve({
               rpcUrl: this.state.rpcUrl,
               chainId: this.state.chainId,
@@ -209,6 +217,11 @@ export class RemixWalletProvider extends Plugin implements IProvider {
         }
       })
     })
+  }
+
+  // EIP-1193 request method - used by ethers BrowserProvider
+  async request(args: { method: string, params?: any[] }): Promise<any> {
+    return this.handleRequest({ method: args.method, params: args.params || [], id: Date.now(), jsonrpc: '2.0' })
   }
 
   async sendAsync(data: JsonDataRequest): Promise<any> {
@@ -238,6 +251,7 @@ export class RemixWalletProvider extends Plugin implements IProvider {
     switch (data.method) {
       case 'eth_accounts':
       case 'eth_requestAccounts':
+        console.log('[RemixWalletProvider] eth_accounts request')
         return this.getAccounts()
         
       case 'eth_chainId':
@@ -247,7 +261,9 @@ export class RemixWalletProvider extends Plugin implements IProvider {
         return this.state.chainId.toString()
         
       case 'eth_getBalance':
-        return this.provider.getBalance(data.params[0], data.params[1])
+        const balance = await this.provider.getBalance(data.params[0], data.params[1])
+        // Return as hex string for JSON-RPC compatibility
+        return '0x' + balance.toString(16)
         
       case 'eth_getTransactionCount':
         return this.provider.getTransactionCount(data.params[0], data.params[1])
@@ -302,8 +318,10 @@ export class RemixWalletProvider extends Plugin implements IProvider {
   private async getAccounts(): Promise<string[]> {
     try {
       const accounts = await this.call('remixWallet', 'getAccounts')
+      console.log('[RemixWalletProvider] getAccounts from remixWallet:', accounts)
       return accounts || []
     } catch (error) {
+      console.error('[RemixWalletProvider] getAccounts error:', error)
       return []
     }
   }
@@ -316,38 +334,87 @@ export class RemixWalletProvider extends Plugin implements IProvider {
     
     const from = tx.from || accounts[0]
     
+    console.log('[RemixWalletProvider] Incoming tx:', JSON.stringify(tx, (key, value) => 
+      typeof value === 'bigint' ? value.toString() + 'n' : value
+    ))
+    
+    // Normalize gas field (Ethereum uses 'gas', ethers uses 'gasLimit')
+    const gasLimit = tx.gasLimit || tx.gas
+    
     // Ensure we have nonce and chain ID
-    if (tx.nonce === undefined) {
-      tx.nonce = await this.provider!.getTransactionCount(from, 'pending')
+    let nonce = tx.nonce
+    if (nonce === undefined) {
+      nonce = await this.provider!.getTransactionCount(from, 'pending')
     }
     
-    if (tx.chainId === undefined) {
-      tx.chainId = this.state.chainId
-    }
+    const chainId = tx.chainId !== undefined ? tx.chainId : this.state.chainId
     
     // Get gas estimate if not provided
-    if (!tx.gasLimit && !tx.gas) {
+    let finalGasLimit = gasLimit
+    if (!finalGasLimit) {
       try {
-        tx.gasLimit = await this.provider!.estimateGas({ ...tx, from })
+        finalGasLimit = await this.provider!.estimateGas({ ...tx, from })
       } catch (e) {
-        tx.gasLimit = '0x5208' // 21000 for simple transfers
+        finalGasLimit = 21000n // 21000 for simple transfers
       }
     }
     
-    // Get gas price if not provided
-    if (!tx.gasPrice && !tx.maxFeePerGas) {
+    // Get gas price - prefer values from incoming tx, fetch only if not provided
+    let maxFeePerGas = tx.maxFeePerGas
+    let maxPriorityFeePerGas = tx.maxPriorityFeePerGas
+    let gasPrice = tx.gasPrice
+    let type = tx.type
+    
+    // Only fetch fee data if no gas pricing info was provided
+    if (!gasPrice && !maxFeePerGas) {
+      console.log('[RemixWalletProvider] No gas fees in tx, fetching from provider...')
       const feeData = await this.provider!.getFeeData()
+      console.log('[RemixWalletProvider] FeeData:', {
+        maxFeePerGas: feeData.maxFeePerGas?.toString(),
+        maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
+        gasPrice: feeData.gasPrice?.toString()
+      })
+      
       if (feeData.maxFeePerGas) {
-        tx.maxFeePerGas = feeData.maxFeePerGas
-        tx.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas
-        tx.type = 2
+        // Add a buffer to ensure tx goes through (1.5x)
+        maxFeePerGas = (feeData.maxFeePerGas * 150n) / 100n
+        maxPriorityFeePerGas = feeData.maxPriorityFeePerGas || 1000000000n // 1 gwei default
+        type = 2
+      } else if (feeData.gasPrice) {
+        gasPrice = (feeData.gasPrice * 150n) / 100n
       } else {
-        tx.gasPrice = feeData.gasPrice
+        // Fallback to reasonable defaults for Sepolia
+        maxFeePerGas = 2000000000n // 2 gwei
+        maxPriorityFeePerGas = 1000000000n // 1 gwei
+        type = 2
       }
     }
+    
+    // Build clean transaction object for signing
+    const cleanTx: any = {
+      to: tx.to || null,
+      value: tx.value || '0x0',
+      data: tx.data || '0x',
+      gasLimit: finalGasLimit,
+      nonce,
+      chainId,
+      type: type || 2
+    }
+    
+    // Add gas pricing fields
+    if (maxFeePerGas) {
+      cleanTx.maxFeePerGas = maxFeePerGas
+      cleanTx.maxPriorityFeePerGas = maxPriorityFeePerGas || maxFeePerGas
+    } else if (gasPrice) {
+      cleanTx.gasPrice = gasPrice
+    }
+    
+    console.log('[RemixWalletProvider] Signing transaction:', cleanTx)
     
     // Sign transaction with Remix Wallet
-    const signedTx = await this.call('remixWallet', 'signTransaction', from, tx)
+    const signedTx = await this.call('remixWallet', 'signTransaction', from, cleanTx)
+    
+    console.log('[RemixWalletProvider] Broadcasting signed tx:', signedTx)
     
     // Broadcast transaction
     const txResponse = await this.provider!.broadcastTransaction(signedTx)

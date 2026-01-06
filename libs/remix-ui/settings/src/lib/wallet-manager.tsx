@@ -328,22 +328,22 @@ const WalletCard: React.FC<WalletCardProps> = ({
           
           <div className="btn-group">
             {isUnlocked ? (
-              <button className="btn btn-sm btn-outline-warning" onClick={onLock} title="Lock wallet">
+              <button className="btn btn-sm btn-warning" onClick={onLock} title="Lock wallet">
                 <i className="fas fa-lock"></i>
               </button>
             ) : (
-              <button className="btn btn-sm btn-outline-success" onClick={onUnlock} title="Unlock wallet">
+              <button className="btn btn-sm btn-success" onClick={onUnlock} title="Unlock wallet">
                 <i className="fas fa-unlock"></i>
               </button>
             )}
             
             {wallet.hasSeedBackup && (
-              <button className="btn btn-sm btn-outline-secondary" onClick={onExport} title="Export seed phrase">
+              <button className="btn btn-sm btn-info" onClick={onExport} title="Export seed phrase">
                 <i className="fas fa-key"></i>
               </button>
             )}
             
-            <button className="btn btn-sm btn-outline-danger" onClick={onDelete} title="Delete wallet">
+            <button className="btn btn-sm btn-danger" onClick={onDelete} title="Delete wallet">
               <i className="fas fa-trash"></i>
             </button>
           </div>

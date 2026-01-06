@@ -475,18 +475,33 @@ export class RemixWalletPlugin extends Plugin {
   async signTransaction(address: string, transaction: TransactionRequest): Promise<string> {
     const wallet = this.getUnlockedWallet(address)
     
-    const signedTx = await wallet.ethersWallet.signTransaction({
-      to: transaction.to,
-      value: transaction.value,
-      data: transaction.data,
-      gasLimit: transaction.gasLimit,
-      gasPrice: transaction.gasPrice,
-      maxFeePerGas: transaction.maxFeePerGas,
-      maxPriorityFeePerGas: transaction.maxPriorityFeePerGas,
+    // Normalize gas field (handle both 'gas' and 'gasLimit')
+    const gasLimit = transaction.gasLimit || (transaction as any).gas
+    
+    // Build the transaction object for ethers
+    const txToSign: any = {
+      to: transaction.to || null,
+      value: transaction.value || '0x0',
+      data: transaction.data || '0x',
+      gasLimit: gasLimit,
       nonce: transaction.nonce,
       chainId: transaction.chainId,
-      type: transaction.type
-    })
+      type: transaction.type || 2
+    }
+    
+    // Add gas price fields based on transaction type
+    if (transaction.maxFeePerGas) {
+      txToSign.maxFeePerGas = transaction.maxFeePerGas
+      txToSign.maxPriorityFeePerGas = transaction.maxPriorityFeePerGas
+    } else if (transaction.gasPrice) {
+      txToSign.gasPrice = transaction.gasPrice
+    }
+    
+    console.log('[RemixWallet] Signing transaction:', txToSign)
+    
+    const signedTx = await wallet.ethersWallet.signTransaction(txToSign)
+    
+    console.log('[RemixWallet] Signed transaction:', signedTx)
     
     this.emit('transactionSigned', { address, txHash: signedTx })
     
